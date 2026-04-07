@@ -97,10 +97,10 @@ export default function WardLayer({ onWardSelect }) {
     }
   }, [liveWardScores, liveWardServices])
 
-  const handleSelect = (ward) => {
+  const handleSelect = (ward, e) => {
     setSelectedWard(ward)
     setKey(k => k + 1)
-    onWardSelect?.(ward)
+    onWardSelect?.(ward, e)
   }
 
   return (
@@ -117,8 +117,8 @@ export default function WardLayer({ onWardSelect }) {
           mouseout: (e) => {
             e.target.setStyle(getWardStyle(feature, selectedWard?.name))
           },
-          click: () => {
-            handleSelect(props)
+          click: (e) => {
+            handleSelect(props, e)
           },
         })
         layer.bindTooltip(

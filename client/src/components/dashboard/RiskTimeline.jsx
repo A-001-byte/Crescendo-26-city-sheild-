@@ -1,31 +1,31 @@
 import { useEffect, useState } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip,
-  ResponsiveContainer, ReferenceLine, ReferenceArea, Legend
+  ResponsiveContainer, ReferenceArea
 } from 'recharts'
 import { fetchScoreHistory } from '../../utils/api'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const SERVICES = [
-  { key: 'fuel', color: '#DC2626', label: 'Fuel' },
-  { key: 'power', color: '#EAB308', label: 'Power' },
-  { key: 'food', color: '#16A34A', label: 'Food' },
-  { key: 'logistics', color: '#6366F1', label: 'Logistics' },
+  { key: 'fuel', color: '#ba1a1a', label: 'Fuel' },
+  { key: 'power', color: '#000000', label: 'Power' },
+  { key: 'food', color: '#22c55e', label: 'Food' },
+  { key: 'logistics', color: '#c6c6c6', label: 'Logistics' },
 ]
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="p-3 text-xs" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
-      <p className="font-mono mb-2" style={{ color: '#475569' }}>{label}</p>
+    <div className="p-6 rounded-[2rem] bg-surface-container-lowest border border-outline-variant/30 shadow-2xl">
+      <p className="text-[10px] font-extrabold uppercase tracking-widest text-secondary mb-4">{label} METRICS</p>
       {payload.map(p => (
-        <div key={p.dataKey} className="flex items-center justify-between gap-4 mb-1">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2" style={{ backgroundColor: p.color }} />
-            <span style={{ color: '#475569' }}>{p.name}</span>
+        <div key={p.dataKey} className="flex items-center justify-between gap-8 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[10px]" style={{ color: p.color }}>circle</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">{p.name}</span>
           </div>
-          <span className="font-mono font-bold" style={{ color: p.color }}>{p.value.toFixed(1)}</span>
+          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value != null ? p.value.toFixed(1) : '—'}</span>
         </div>
       ))}
     </div>
@@ -89,41 +89,29 @@ export default function RiskTimeline() {
   }, [])
 
   return (
-    <div className="p-4 h-full flex flex-col shadow-sm" style={{ background: '#F8FAFC', border: '1px solid #DBEAFE' }}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading font-semibold text-text-primary text-sm tracking-wide uppercase">7-Day Risk Trend</h3>
-        <div className="flex items-center gap-3">
-          {SERVICES.map(s => (
-            <div key={s.key} className="flex items-center gap-1.5">
-              <div className="w-2 h-2" style={{ backgroundColor: s.color }} />
-              <span className="text-xs text-text-muted tracking-wide uppercase font-semibold">{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex-1 min-h-0">
+    <div className="h-full flex flex-col relative overflow-hidden isolate" style={{ maxHeight: '220px' }}>
+      <div className="flex-1 min-h-0 relative -mx-4">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-            {/* Risk zones */}
-            <ReferenceArea y1={0} y2={3} fill="#16A34A" fillOpacity={0.04} />
-            <ReferenceArea y1={3} y2={7} fill="#EAB308" fillOpacity={0.04} />
-            <ReferenceArea y1={7} y2={10} fill="#DC2626" fillOpacity={0.04} />
+          <AreaChart data={chartData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
+            <ReferenceArea y1={7} y2={10} fill="#ba1a1a" fillOpacity={0.03} />
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e2e2" vertical={false} />
             <XAxis
               dataKey="day"
-              tick={{ fill: '#64748B', fontSize: 11, fontFamily: '"Plus Jakarta Sans"' }}
+              tick={{ fill: '#777777', fontSize: 10, fontFamily: '"Plus Jakarta Sans"', fontWeight: 800, textTransform: 'uppercase' }}
               axisLine={false}
               tickLine={false}
+              dy={10}
             />
             <YAxis
               domain={[1, 10]}
-              tick={{ fill: '#64748B', fontSize: 10, fontFamily: '"JetBrains Mono"' }}
+              tick={{ fill: '#777777', fontSize: 10, fontFamily: '"Plus Jakarta Sans"', fontWeight: 800 }}
               axisLine={false}
               tickLine={false}
               tickCount={5}
+              dx={-10}
             />
-            <RechartTooltip content={<CustomTooltip />} />
+            <RechartTooltip content={<CustomTooltip />} cursor={{ stroke: '#c6c6c6', strokeWidth: 1, strokeDasharray: '4 4' }} />
             {SERVICES.map(s => (
               <Area
                 key={s.key}
@@ -131,11 +119,11 @@ export default function RiskTimeline() {
                 dataKey={s.key}
                 name={s.label}
                 stroke={s.color}
-                strokeWidth={2}
+                strokeWidth={3}
                 fill={s.color}
-                fillOpacity={0.12}
+                fillOpacity={0.05}
                 dot={false}
-                activeDot={{ r: 4, fill: s.color }}
+                activeDot={{ r: 6, fill: s.color, stroke: '#ffffff', strokeWidth: 2 }}
               />
             ))}
           </AreaChart>

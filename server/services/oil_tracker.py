@@ -34,10 +34,68 @@ FALLBACK_OIL_DATA = {
 }
 
 
+def _fetch_from_yfinance() -> Dict[str, Any]:
+    """Fetch live crude oil price from Yahoo Finance (CL=F = WTI front-month)."""
+    from datetime import datetime
+    import yfinance as yf
+
+    wti_hist = yf.Ticker("CL=F").history(period="8d")
+    if wti_hist.empty or len(wti_hist) < 2:
+        raise ValueError("yfinance returned no data for CL=F")
+
+    import math
+    wti_close = wti_hist["Close"].dropna()
+    wti_close = wti_close[wti_close.apply(lambda x: math.isfinite(float(x)))]
+    if len(wti_close) < 2:
+        raise ValueError("Insufficient finite WTI close prices after NaN/inf cleaning")
+
+    wti_current = float(wti_close.iloc[-1])
+    wti_prev = float(wti_close.iloc[-2])
+    trend_7d = [round(float(v), 2) for v in wti_close.tail(7).tolist()]
+
+    # Try real Brent price (BZ=F); synthesise from WTI only if unavailable
+    try:
+        brent_hist = yf.Ticker("BZ=F").history(period="8d")
+        if not brent_hist.empty and len(brent_hist) >= 2:
+            brent_close = brent_hist["Close"].dropna()
+            brent_close = brent_close[brent_close.apply(lambda x: math.isfinite(float(x)))]
+            if len(brent_close) < 2:
+                raise ValueError("BZ=F insufficient data after cleaning")
+            brent_current = round(float(brent_close.iloc[-1]), 2)
+            brent_prev = round(float(brent_close.iloc[-2]), 2)
+        else:
+            raise ValueError("BZ=F empty")
+    except Exception:
+        brent_current = round(wti_current * 1.04, 2)
+        brent_prev = round(wti_prev * 1.04, 2)
+
+    change_pct = ((brent_current - brent_prev) / brent_prev * 100) if brent_prev else 0.0
+    wti_change_pct = ((wti_current - wti_prev) / wti_prev * 100) if wti_prev else 0.0
+    volatility = _calculate_volatility(trend_7d)
+    supply_impact = "high" if abs(change_pct) > 2.5 or brent_current > 90 else "moderate"
+
+    return {
+        "brent_current": brent_current,
+        "brent_prev_close": brent_prev,
+        "brent_change_pct": round(change_pct, 2),
+        "wti_current": round(wti_current, 2),
+        "wti_prev_close": round(wti_prev, 2),
+        "wti_change_pct": round(wti_change_pct, 2),
+        "trend_7d": trend_7d,
+        "volatility_index": volatility,
+        "supply_impact": supply_impact,
+        "opec_compliance_pct": 94.2,
+        "india_import_basket": round(brent_current * 0.977, 2),
+        "strategic_reserve_days": 9.5,
+        "last_updated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "yfinance",
+    }
+
+
 def get_oil_prices() -> Dict[str, Any]:
     """
     Retrieve current oil price data.
-    Uses Alpha Vantage if key is configured, otherwise returns realistic fallback.
+    Priority: yfinance (no key needed) → Alpha Vantage → hardcoded fallback.
     Results are cached for OIL_CACHE_TTL seconds.
     """
     now = time.time()
@@ -45,6 +103,19 @@ def get_oil_prices() -> Dict[str, Any]:
         logger.debug("Returning cached oil data")
         return _oil_cache["data"]
 
+    # 1. Try yfinance first — no API key required
+    try:
+        data = _fetch_from_yfinance()
+        _oil_cache["data"] = data
+        _oil_cache["timestamp"] = now
+        logger.info("Oil price fetched from yfinance: brent=%.2f", data["brent_current"])
+        return data
+    except (ImportError, ValueError, KeyError, TypeError) as exc:
+        logger.warning("yfinance oil fetch failed (expected): %s", exc)
+    except Exception as exc:
+        logger.exception("yfinance oil fetch failed (unexpected): %s", exc)
+
+    # 2. Try Alpha Vantage if key is set
     if config.ALPHA_VANTAGE_KEY:
         try:
             data = _fetch_from_alpha_vantage()

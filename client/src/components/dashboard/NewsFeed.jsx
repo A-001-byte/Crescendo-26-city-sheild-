@@ -36,25 +36,9 @@ export default function NewsFeed({ alertBannerText, primaryRiskCategory, recomme
   }
 
   return (
-    <div
-      className="flex flex-col h-full overflow-hidden shadow-sm"
-      style={{ background: '#F8FAFC', border: '1px solid #DBEAFE' }}
-    >
-      <div
-        className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid #EFF6FF' }}
-      >
-        <h3 className="font-heading font-semibold text-sm tracking-wide uppercase" style={{ color: '#0F172A' }}>News Feed</h3>
-        <span
-          className="text-[10px] font-mono px-2 py-0.5 tracking-wide uppercase"
-          style={{ background: '#EFF6FF', color: '#3B82F6' }}
-        >
-          {feedItems.length} updates
-        </span>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
-          {feedItems.map((news, idx) => (
+    <div className="flex flex-col h-full overflow-hidden isolate rounded-[3rem]">
+      <div className="flex-1 overflow-y-auto no-scrollbar pt-2 pr-2">
+        {feedItems.map((news, idx) => (
           <div
             key={news.id}
             onClick={() => news.url && window.open(news.url, '_blank', 'noopener,noreferrer')}
