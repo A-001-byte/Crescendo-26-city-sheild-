@@ -13,20 +13,16 @@ export default function GlobalEventTicker() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   // Use either context events or mock news
+  const ctx = useCrisis()
   let newsList = MOCK_NEWS
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const ctx = useCrisis()
-    if (ctx?.events?.length) {
-      newsList = ctx.events.slice(0, 4).map((e, i) => ({
-        id: e.id || i,
-        title: e.title,
-        img: MOCK_NEWS[i % MOCK_NEWS.length].img,
-        time: 'Just now'
-      }))
-    }
-  } catch (err) {
-    // fallback
+  
+  if (ctx?.events?.length) {
+    newsList = ctx.events.slice(0, 4).map((e, i) => ({
+      id: e.id || i,
+      title: e.title,
+      img: MOCK_NEWS[i % MOCK_NEWS.length].img,
+      time: 'Just now'
+    }))
   }
 
   useEffect(() => {
