@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import logging
 from typing import Dict, List, Any
 from datetime import datetime
@@ -7,6 +8,34 @@ from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Fake news filter (BERT-based) — loaded lazily
+# ---------------------------------------------------------------------------
+_root_services = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "services"))
+if _root_services not in sys.path:
+    sys.path.insert(0, _root_services)
+
+def _filter_articles(articles: List[Dict]) -> List[Dict]:
+    """
+    Remove likely fake/unreliable articles using the BERT fake news classifier.
+    Falls back to returning all articles if the model is unavailable.
+    """
+    try:
+        from fake_news_filter import filter_headlines
+        titles = [a.get("title", "") for a in articles if a.get("title")]
+        if not titles:
+            return articles
+        verified_titles = set(filter_headlines(titles))
+        filtered = [a for a in articles if a.get("title", "") in verified_titles]
+        if not filtered:
+            logger.warning("Fake news filter removed all articles — using originals")
+            return articles
+        logger.info("Fake news filter: %d/%d articles passed", len(filtered), len(articles))
+        return filtered
+    except Exception as exc:
+        logger.warning("Fake news filter unavailable: %s — using all articles", exc)
+        return articles
 
 # ---------------------------------------------------------------------------
 # Load crisis keyword lexicon
@@ -206,6 +235,7 @@ def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, float]:
         "keyword_score": float
     }
     """
+    articles = _filter_articles(articles)
     analyses = [analyze_article(a) for a in articles]
     return _build_contract_metrics(analyses)
 
@@ -223,6 +253,7 @@ def analyze_batch_detailed(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         avg_severity: mean combined_severity across all articles
         timestamp: ISO-format UTC time of analysis
     """
+    articles = _filter_articles(articles)
     analyses = [analyze_article(a) for a in articles]
 
     # Initialise service aggregation
