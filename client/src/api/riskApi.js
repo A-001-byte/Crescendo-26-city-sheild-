@@ -146,9 +146,7 @@ const normalizeWardRisk = (payload) => {
 export const getCityRisk = async (cityName) => {
   const query = cityName ? `?city=${encodeURIComponent(cityName)}` : ''
   const payload = await fetchJson(`/api/risk/city-score${query}`)
-  const data = normalizeCityRisk(payload)
-  console.log(data)
-  return data
+  return normalizeCityRisk(payload)
 }
 
 export const getWardRisk = async (wardName) => {
@@ -158,7 +156,5 @@ export const getWardRisk = async (wardName) => {
 
   const payload = await fetchJson('/api/risk/ward-scores')
   const wardPayload = unwrap(payload)?.scores?.[wardName] || {}
-  const data = normalizeSingleWardRisk(wardPayload, wardName)
-  console.log(data)
-  return data
+  return normalizeSingleWardRisk(wardPayload, wardName)
 }
