@@ -24,13 +24,8 @@ logger = logging.getLogger(__name__)
 risk_bp = Blueprint("risk", __name__)
 
 
-def _persist_analytics_async(config_module, analytics_store, risk_calculator, nlp_signals, nlp_result, oil_data):
+def _persist_analytics_async(config_module, analytics_store, city_payload, nlp_signals, nlp_result, oil_data):
     try:
-        city_payload = risk_calculator.calculate_city_risk_score(
-            nlp_signals=nlp_signals,
-            oil_data=oil_data,
-            use_mock_data=False,
-        )
         analytics_store.persist_snapshot_bundle(
             city=config_module.config.CITY,
             city_payload=city_payload,
@@ -63,6 +58,11 @@ def _calculate_live_risk_payload():
         oil_data=oil_data,
         use_mock_data=False,
     )
+    city_payload = risk_calculator.calculate_city_risk_score(
+        nlp_signals=nlp_signals,
+        oil_data=oil_data,
+        use_mock_data=False,
+    )
 
     # Best-effort non-blocking persistence for analytics tab data.
     try:
@@ -70,7 +70,7 @@ def _calculate_live_risk_payload():
             _persist_analytics_async,
             config_module,
             analytics_store,
-            risk_calculator,
+            city_payload,
             nlp_signals,
             nlp_result,
             oil_data,

@@ -1,8 +1,10 @@
 import logging
 import os
+import threading
 from contextlib import contextmanager
 from typing import Any, Iterable, Optional
 
+import eventlet.semaphore
 import psycopg2
 from psycopg2.pool import ThreadedConnectionPool
 
@@ -10,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 _pool: Optional[ThreadedConnectionPool] = None
 _schema_initialized = False
+_pool_lock = eventlet.semaphore.Semaphore(1)
+_schema_init_lock = threading.RLock()
 
 
 def _get_database_url() -> str:
@@ -26,16 +30,20 @@ def _init_pool() -> Optional[ThreadedConnectionPool]:
     if _pool is not None:
         return _pool
 
-    db_url = _get_database_url().strip()
-    if not db_url:
-        logger.warning("NEON_DATABASE_URL/DATABASE_URL not configured; DB features disabled")
-        return None
+    with _pool_lock:
+        if _pool is not None:
+            return _pool
 
-    minconn = int(os.getenv("DB_POOL_MIN_CONN", "1"))
-    maxconn = int(os.getenv("DB_POOL_MAX_CONN", "5"))
+        db_url = _get_database_url().strip()
+        if not db_url:
+            logger.warning("NEON_DATABASE_URL/DATABASE_URL not configured; DB features disabled")
+            return None
 
-    _pool = ThreadedConnectionPool(minconn=minconn, maxconn=maxconn, dsn=db_url)
-    logger.info("PostgreSQL pool initialized (min=%d max=%d)", minconn, maxconn)
+        minconn = int(os.getenv("DB_POOL_MIN_CONN", "1"))
+        maxconn = int(os.getenv("DB_POOL_MAX_CONN", "5"))
+
+        _pool = ThreadedConnectionPool(minconn=minconn, maxconn=maxconn, dsn=db_url)
+        logger.info("PostgreSQL pool initialized (min=%d max=%d)", minconn, maxconn)
     return _pool
 
 
@@ -58,20 +66,24 @@ def ensure_schema() -> bool:
     if _schema_initialized:
         return True
 
-    if not is_db_enabled():
-        return False
+    with _schema_init_lock:
+        if _schema_initialized:
+            return True
 
-    schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
-    with open(schema_path, "r", encoding="utf-8") as f:
-        schema_sql = f.read()
+        if not is_db_enabled():
+            return False
 
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(schema_sql)
-        conn.commit()
+        schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
+        with open(schema_path, "r", encoding="utf-8") as f:
+            schema_sql = f.read()
 
-    _schema_initialized = True
-    logger.info("Database schema ensured")
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(schema_sql)
+            conn.commit()
+
+        _schema_initialized = True
+        logger.info("Database schema ensured")
     return True
 
 
@@ -84,6 +96,15 @@ def execute_write(query: str, params: Optional[Iterable[Any]] = None) -> int:
         return rowcount
 
 
+def execute_many(query: str, params_list: Iterable[Iterable[Any]]) -> int:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.executemany(query, params_list)
+            rowcount = cur.rowcount
+        conn.commit()
+        return rowcount
+
+
 def fetch_all(query: str, params: Optional[Iterable[Any]] = None):
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -91,7 +112,7 @@ def fetch_all(query: str, params: Optional[Iterable[Any]] = None):
             rows = cur.fetchall()
             columns = [desc[0] for desc in cur.description]
 
-    return [dict(zip(columns, row)) for row in rows]
+    return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
 def fetch_one(query: str, params: Optional[Iterable[Any]] = None):

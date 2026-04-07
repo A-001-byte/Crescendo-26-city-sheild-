@@ -75,7 +75,7 @@ def dispatch_alert():
         try:
             persist_alert(message=message, severity=severity, category=ward)
         except Exception as persist_exc:
-            logger.warning("Alert persisted skipped/failed: %s", persist_exc)
+            logger.warning("Alert persistence skipped/failed: %s", persist_exc)
 
         return jsonify({
             "success": True,

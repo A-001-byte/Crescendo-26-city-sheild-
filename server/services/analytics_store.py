@@ -1,9 +1,7 @@
 import logging
 from typing import Any, Dict, Iterable, List, Optional
 
-from werkzeug.security import generate_password_hash
-
-from db.postgres import ensure_schema, execute_write, fetch_all, fetch_one, is_db_enabled
+from db.postgres import ensure_schema, execute_many, execute_write, fetch_all, is_db_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +88,12 @@ def persist_snapshot_bundle(
 
     scores = city_payload.get("scores", {})
     oil_price = _to_float((oil_data or {}).get("brent_current"), None)
-    overall = _to_float(city_payload.get("overall_crs"), 0.0) or 0.0
+    overall = _to_float(city_payload.get("overall_crs"), 0.0)
 
-    fuel = _to_float(scores.get("fuel"), 0.0) or 0.0
-    food = _to_float(scores.get("food"), 0.0) or 0.0
-    transport = _to_float(scores.get("transport"), 0.0) or 0.0
-    power = _to_float(scores.get("power"), 0.0) or 0.0
+    fuel = _to_float(scores.get("fuel"), 0.0)
+    food = _to_float(scores.get("food"), 0.0)
+    transport = _to_float(scores.get("transport"), 0.0)
+    power = _to_float(scores.get("power"), 0.0)
 
     persist_risk_snapshot(
         city=city,
@@ -148,6 +146,8 @@ def persist_events(analyzed_events: Iterable[Dict[str, Any]]) -> None:
         );
     """
 
+    params_batch = []
+
     for event in analyzed_events:
         source = str(event.get("source") or "Unknown")
         headline = str(event.get("title") or "")
@@ -160,10 +160,10 @@ def persist_events(analyzed_events: Iterable[Dict[str, Any]]) -> None:
         if not isinstance(services, list):
             services = []
 
-        execute_write(
-            query,
-            (source, headline, sentiment, severity, services, source, headline),
-        )
+        params_batch.append((source, headline, sentiment, severity, services, source, headline))
+
+    if params_batch:
+        execute_many(query, params_batch)
 
 
 def persist_alert(message: str, severity: str, category: str) -> None:
@@ -192,28 +192,10 @@ def persist_alert(message: str, severity: str, category: str) -> None:
     )
 
 
-def create_user(name: str, phone: str, email: str, password: str, is_active: bool = True) -> Dict[str, Any]:
-    if not is_db_enabled():
-        raise RuntimeError("Database is not configured")
-
-    ensure_schema()
-
-    password_hash = generate_password_hash(password)
-
-    query = """
-        INSERT INTO users (name, phone, email, password_hash, is_active)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING id, name, phone, email, is_active, created_at;
-    """
-
-    row = fetch_one(query, (name, phone, email, password_hash, is_active))
-    if row is None:
-        raise RuntimeError("Failed to create user")
-
-    return row
-
-
 def fetch_trends(limit: int = 200, city: Optional[str] = None) -> List[Dict[str, Any]]:
+    if not is_db_enabled():
+        return []
+
     ensure_schema()
 
     limit = max(1, min(int(limit), 1000))
@@ -248,6 +230,9 @@ def fetch_trends(limit: int = 200, city: Optional[str] = None) -> List[Dict[str,
 
 
 def fetch_events(limit: int = 100) -> List[Dict[str, Any]]:
+    if not is_db_enabled():
+        return []
+
     ensure_schema()
 
     limit = max(1, min(int(limit), 500))
@@ -269,6 +254,9 @@ def fetch_events(limit: int = 100) -> List[Dict[str, Any]]:
 
 
 def fetch_distribution(limit: int = 200, city: Optional[str] = None) -> List[Dict[str, Any]]:
+    if not is_db_enabled():
+        return []
+
     ensure_schema()
 
     limit = max(1, min(int(limit), 1000))
@@ -311,6 +299,9 @@ def fetch_distribution(limit: int = 200, city: Optional[str] = None) -> List[Dic
 
 
 def fetch_alert_volume(hours: int = 168) -> List[Dict[str, Any]]:
+    if not is_db_enabled():
+        return []
+
     ensure_schema()
 
     hours = max(1, min(int(hours), 24 * 90))
@@ -320,7 +311,7 @@ def fetch_alert_volume(hours: int = 168) -> List[Dict[str, Any]]:
             severity,
             COUNT(*) AS count
         FROM alerts
-        WHERE created_at >= NOW() - (%s || ' hours')::INTERVAL
+        WHERE created_at >= NOW() - MAKE_INTERVAL(hours => %s)
         GROUP BY severity
         ORDER BY count DESC;
     """

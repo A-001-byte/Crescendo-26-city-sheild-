@@ -36,7 +36,7 @@ def get_analytics_trends():
         return jsonify({"success": False, "error": "Invalid 'limit' parameter"}), 400
     except Exception as exc:
         logger.exception("Error in /api/analytics/trends: %s", exc)
-        return jsonify({"success": False, "error": str(exc)}), 500
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
 @analytics_bp.route("/api/analytics/events", methods=["GET"])
@@ -81,7 +81,10 @@ def get_analytics_alerts():
 
     try:
         hours = int(request.args.get("hours", 168))
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid 'hours' parameter"}), 400
 
+    try:
         rows = fetch_alert_volume(hours=hours)
         total = sum(int(r.get("count", 0)) for r in rows)
 
@@ -90,8 +93,6 @@ def get_analytics_alerts():
             "data": rows,
             "total": total,
         }), 200
-    except ValueError:
-        return jsonify({"success": False, "error": "Invalid 'hours' parameter"}), 400
     except Exception as exc:
         logger.exception("Error in /api/analytics/alerts: %s", exc)
-        return jsonify({"success": False, "error": str(exc)}), 500
+        return jsonify({"success": False, "error": "Internal server error"}), 500
