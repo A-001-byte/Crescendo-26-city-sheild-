@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const sharedFontStack = ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
@@ -72,24 +74,25 @@ export default {
           low: '#16A34A',
           moderate: '#EAB308',
           high: '#ba1a1a',
-          critical: '#ba1a1a',
+          critical: '#7f1d1d',
         },
         accent: {
           blue: '#2771df',
         }
       },
       borderRadius: {
-        "DEFAULT": "1rem",
+        "DEFAULT": "0.25rem",
+        "card": "1rem",
         "lg": "2rem",
         "xl": "3rem",
         "full": "9999px"
       },
       fontFamily: {
-        headline: ["Plus Jakarta Sans"],
-        body: ["Plus Jakarta Sans"],
-        label: ["Plus Jakarta Sans"],
+        headline: sharedFontStack,
+        body: sharedFontStack,
+        label: sharedFontStack,
         mono: ['"JetBrains Mono"', 'monospace'],
-        heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+        heading: sharedFontStack,
       }
     },
   },

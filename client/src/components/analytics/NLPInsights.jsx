@@ -45,27 +45,6 @@ export default function NLPInsights() {
 
   return (
     <div className="space-y-4">
-      {/* Signal Strength Bars */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg">
-        <h3 className="font-heading font-semibold text-text-primary text-sm mb-4">Signal Strength by Service</h3>
-        <div className="space-y-3">
-          {Object.entries(signals).map(([key, val]) => (
-            <div key={key} className="flex items-center gap-3">
-              <span className="text-xs text-text-secondary w-20 capitalize">{key}</span>
-              <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${val * 100}%`, backgroundColor: SERVICE_COLORS[key] }}
-                />
-              </div>
-              <span className="text-xs font-mono w-10 text-right" style={{ color: SERVICE_COLORS[key] }}>
-                {(val * 100).toFixed(0)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Events Table */}
       <div className="bg-bg-card border border-border-default rounded-xl shadow-lg overflow-hidden">
         <div className="px-4 py-3 border-b border-border-default">
@@ -105,7 +84,7 @@ export default function NLPInsights() {
                       {(e.affected_services || []).map(s => (
                         <span
                           key={s}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+                          className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono"
                           style={{ backgroundColor: `${SERVICE_COLORS[s]}20`, color: SERVICE_COLORS[s] }}
                         >
                           {s}
@@ -117,6 +96,27 @@ export default function NLPInsights() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Signal Strength Bars */}
+      <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg">
+        <h3 className="font-heading font-semibold text-text-primary text-sm mb-4">Signal Strength by Service</h3>
+        <div className="space-y-3">
+          {Object.entries(signals).map(([key, val]) => (
+            <div key={key} className="flex items-center gap-3">
+              <span className="text-xs text-text-secondary w-20 capitalize">{key}</span>
+              <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${val * 100}%`, backgroundColor: SERVICE_COLORS[key] }}
+                />
+              </div>
+              <span className="text-xs font-mono w-10 text-right" style={{ color: SERVICE_COLORS[key] }}>
+                {(val * 100).toFixed(0)}%
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

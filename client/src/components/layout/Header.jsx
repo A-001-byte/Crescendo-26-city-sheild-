@@ -1,4 +1,5 @@
 import { useCrisis } from '../../context/CrisisContext'
+import { Link } from 'react-router-dom'
 
 export default function Header({ onToggleSidebar }) {
   const { wsConnected, demoActive } = useCrisis()
@@ -27,6 +28,19 @@ export default function Header({ onToggleSidebar }) {
             {demoActive ? 'SIMULATION' : (wsConnected ? 'LIVE FEED ACTIVE' : 'OFFLINE')}
           </span>
         </div>
+
+        <Link
+          to="/login"
+          className="text-[10px] font-extrabold uppercase tracking-widest text-secondary hover:text-primary transition-colors"
+        >
+          Login
+        </Link>
+        <Link
+          to="/signup"
+          className="px-5 py-3 rounded-full bg-primary text-white text-[10px] font-extrabold uppercase tracking-widest hover:opacity-90 transition-opacity"
+        >
+          Sign Up
+        </Link>
       </div>
     </header>
   )

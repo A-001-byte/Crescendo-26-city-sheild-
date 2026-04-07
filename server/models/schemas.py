@@ -80,3 +80,26 @@ class WardData(BaseModel):
 
     class Config:
         extra = "allow"
+
+
+class UserAuthRecord(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    username: str
+    password_hash: str
+    created_at: str
+
+    class Config:
+        extra = "allow"
+
+
+class SignupRequest(BaseModel):
+    fullName: str
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    identity: str
+    password: str

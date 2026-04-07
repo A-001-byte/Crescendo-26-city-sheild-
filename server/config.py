@@ -14,6 +14,9 @@ class Config:
     # Flask settings
     SECRET_KEY = os.getenv("FLASK_SECRET", "cityshield-dev-secret-key-2024")
     DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
+    JWT_SECRET = os.getenv("JWT_SECRET", SECRET_KEY)
+    JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+    JWT_EXP_MINUTES = int(os.getenv("JWT_EXP_MINUTES", "1440"))
 
     # External API base URLs
     GDELT_BASE_URL = os.getenv(

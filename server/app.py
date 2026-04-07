@@ -62,12 +62,14 @@ def create_app() -> Flask:
     from routes.alerts import alerts_bp
     from routes.city import city_bp
     from routes.risk_routes import risk_bp
+    from routes.auth import auth_bp
 
     app.register_blueprint(crisis_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(alerts_bp)
     app.register_blueprint(city_bp)
     app.register_blueprint(risk_bp)
+    app.register_blueprint(auth_bp)
 
     # ------------------------------------------------------------------
     # Root health-check

@@ -7,6 +7,8 @@ import { fetchScoreHistory } from '../../utils/api'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+const toUpperTick = (label) => String(label ?? '').toUpperCase()
+
 const SERVICES = [
   { key: 'fuel', color: '#ba1a1a', label: 'Fuel' },
   { key: 'power', color: '#000000', label: 'Power' },
@@ -89,7 +91,7 @@ export default function RiskTimeline() {
   }, [])
 
   return (
-    <div className="h-full flex flex-col relative overflow-hidden isolate" style={{ maxHeight: '220px' }}>
+    <div className="h-full flex flex-col relative overflow-hidden isolate max-h-[220px]">
       <div className="flex-1 min-h-0 relative -mx-4">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 20, right: 0, bottom: 0, left: -20 }}>
@@ -98,7 +100,8 @@ export default function RiskTimeline() {
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e2e2" vertical={false} />
             <XAxis
               dataKey="day"
-              tick={{ fill: '#777777', fontSize: 10, fontFamily: '"Plus Jakarta Sans"', fontWeight: 800, textTransform: 'uppercase' }}
+              tick={{ fill: '#777777', fontSize: 10, fontFamily: '"Plus Jakarta Sans"', fontWeight: 800 }}
+              tickFormatter={toUpperTick}
               axisLine={false}
               tickLine={false}
               dy={10}
