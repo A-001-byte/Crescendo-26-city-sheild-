@@ -232,7 +232,13 @@ def calculate_city_risk_score(nlp_signals=None, oil_data=None):
     }
 
 
-def get_historical_scores(days: int = 7):
+def generate_mock_historical_scores(days: int = 7):
+    """
+    Generate synthetic historical CRS records for demo use.
+
+    This function intentionally calls calculate_city_risk_score repeatedly,
+    so returned records are mock data and not persisted history.
+    """
     history = []
     days = max(1, min(int(days), 30))
     for i in range(days):
@@ -243,6 +249,11 @@ def get_historical_scores(days: int = 7):
             "alert_level": current.get("alert_level", "green"),
         })
     return history
+
+
+def get_historical_scores(days: int = 7):
+    """Compatibility wrapper that returns demo historical records."""
+    return generate_mock_historical_scores(days=days)
 
 
 def get_ward_score(ward_name: str):

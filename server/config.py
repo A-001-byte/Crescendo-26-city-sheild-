@@ -28,6 +28,7 @@ class Config:
         "ALPHA_VANTAGE_BASE_URL",
         "https://www.alphavantage.co/query"
     )
+    GDELT_TIMEOUT = float(os.getenv("GDELT_TIMEOUT", "10"))
 
     # Cache TTLs (seconds)
     NEWS_CACHE_TTL = int(os.getenv("NEWS_CACHE_TTL", "900"))   # 15 minutes
