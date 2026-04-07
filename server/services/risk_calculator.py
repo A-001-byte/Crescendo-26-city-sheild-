@@ -1,10 +1,13 @@
 import random
 import json
 import os
+import logging
 from datetime import datetime, timedelta
 
 # Mock functions as per the user's context description
 # In a real scenario, these would be imported from their respective modules.
+
+logger = logging.getLogger(__name__)
 
 def get_nlp_signals():
     """
@@ -104,7 +107,7 @@ def generate_recommendation(primary_risk_category: str) -> str:
     else:
         return "Monitor all systems and maintain standard operational procedures."
 
-def calculate_risk():
+def calculate_risk(nlp_signals=None, oil_data=None):
     """
     Calculates the city risk score and generates actionable intelligence.
 
@@ -120,12 +123,34 @@ def calculate_risk():
     9.  Generates alerts, trend predictions, and recommendations.
     10. Returns a composite dictionary with all intelligence layers.
     """
-    # 1. Import dependencies
-    nlp_signals = get_nlp_signals()
-    current_price = get_oil_price()
+    # 1. Resolve inputs (prefer provided live inputs, fallback to defaults)
+    default_nlp = get_nlp_signals()
+    sentiment = default_nlp["sentiment"]
+    keyword_score = default_nlp["keyword_score"]
 
-    sentiment = nlp_signals["sentiment"]
-    keyword_score = nlp_signals["keyword_score"]
+    if isinstance(nlp_signals, dict):
+        try:
+            if nlp_signals.get("sentiment") is not None:
+                sentiment = float(nlp_signals.get("sentiment"))
+        except (TypeError, ValueError):
+            pass
+        try:
+            if nlp_signals.get("keyword_score") is not None:
+                keyword_score = float(nlp_signals.get("keyword_score"))
+            elif nlp_signals.get("avg_severity") is not None:
+                keyword_score = float(nlp_signals.get("avg_severity"))
+        except (TypeError, ValueError):
+            pass
+
+    current_price = get_oil_price()
+    if isinstance(oil_data, dict):
+        for key in ("brent_current", "current_price", "price", "wti_current"):
+            if oil_data.get(key) is not None:
+                try:
+                    current_price = float(oil_data.get(key))
+                    break
+                except (TypeError, ValueError):
+                    continue
 
     # 2. Add keyword floor to ensure minimum signal strength
     keyword_score = max(keyword_score, 2)
@@ -197,18 +222,19 @@ def _alert_level_from_score(score: float) -> str:
 
 
 def _load_wards() -> list:
+    wards_path = os.path.join(os.path.dirname(__file__), "..", "data", "pune_wards.json")
     try:
-        wards_path = os.path.join(os.path.dirname(__file__), "..", "data", "pune_wards.json")
         with open(wards_path, "r", encoding="utf-8") as f:
             wards = json.load(f)
             return [w.get("name", "") for w in wards if w.get("name")]
-    except Exception:
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+        logger.error("Failed to load wards from %s: %s", wards_path, exc)
         return []
 
 
 def calculate_city_risk_score(nlp_signals=None, oil_data=None):
     """Compatibility wrapper used by existing routes/app code."""
-    result = calculate_risk()
+    result = calculate_risk(nlp_signals=nlp_signals, oil_data=oil_data)
     scores = result.get("scores", {})
     component_keys = ["fuel", "food", "transport", "power"]
     base_values = [scores.get(k, 1) for k in component_keys]
