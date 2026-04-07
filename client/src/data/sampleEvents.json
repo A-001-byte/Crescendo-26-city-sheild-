@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "title": "Brent Crude surges 3.2% amid Strait of Hormuz shipping concerns",
+    "source": "Reuters",
+    "published_at": "2025-04-05T08:23:00Z",
+    "affected_services": ["fuel", "logistics"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.73,
+    "summary": "Rising tensions in the Strait of Hormuz have caused Brent crude prices to spike 3.2%, threatening fuel supply chains across the Indian subcontinent."
+  },
+  {
+    "id": 2,
+    "title": "India crude import dependency remains at 85% — OMC advance payments activated",
+    "source": "Economic Times",
+    "published_at": "2025-04-05T06:10:00Z",
+    "affected_services": ["fuel"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.71,
+    "summary": "India's oil marketing companies have activated advance payment protocols in response to elevated import dependency and international price volatility."
+  },
+  {
+    "id": 3,
+    "title": "Red Sea shipping disruptions push global freight rates up 12%",
+    "source": "Bloomberg",
+    "published_at": "2025-04-04T14:45:00Z",
+    "affected_services": ["logistics", "fuel"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.68,
+    "summary": "Houthi attacks on commercial vessels in the Red Sea corridor are disrupting shipping lanes, causing freight rates to spike and affecting supply chains globally."
+  },
+  {
+    "id": 4,
+    "title": "India power grid demand reaches 215 GW — coal inventories being monitored",
+    "source": "Power Ministry",
+    "published_at": "2025-04-05T03:00:00Z",
+    "affected_services": ["power"],
+    "severity": "moderate",
+    "crisis_level": "moderate",
+    "combined_severity": 0.52,
+    "summary": "Summer heat wave is pushing electricity demand to seasonal highs. Coal inventories at thermal plants are under review to ensure uninterrupted supply."
+  },
+  {
+    "id": 5,
+    "title": "Wheat futures jump 1.8% after Black Sea corridor update",
+    "source": "Financial Times",
+    "published_at": "2025-04-04T11:20:00Z",
+    "affected_services": ["food"],
+    "severity": "moderate",
+    "crisis_level": "moderate",
+    "combined_severity": 0.49,
+    "summary": "Black Sea grain corridor logistics update has caused short-term volatility in wheat futures, with India's PDS stocks assessed as adequate through next quarter."
+  },
+  {
+    "id": 6,
+    "title": "OPEC+ extends production cuts through Q2 2025 — supply squeeze expected",
+    "source": "Reuters",
+    "published_at": "2025-04-03T16:30:00Z",
+    "affected_services": ["fuel"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.78,
+    "summary": "OPEC+ nations have collectively agreed to extend production cuts into Q2 2025, which analysts expect will further tighten global crude supply."
+  },
+  {
+    "id": 7,
+    "title": "Maharashtra transport strike disrupts Pune-Mumbai freight corridor",
+    "source": "Maharashtra Herald",
+    "published_at": "2025-04-05T05:15:00Z",
+    "affected_services": ["logistics", "food", "fuel"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.76,
+    "summary": "A 48-hour transport strike has disrupted cargo movement between Pune and Mumbai, creating bottlenecks at logistics hubs and delaying essential commodity deliveries."
+  },
+  {
+    "id": 8,
+    "title": "Solar power generation in western India hits record high",
+    "source": "MNRE",
+    "published_at": "2025-04-04T12:00:00Z",
+    "affected_services": ["power"],
+    "severity": "low",
+    "crisis_level": "low",
+    "combined_severity": 0.15,
+    "summary": "Record solar generation in Rajasthan and Gujarat is offsetting thermal plant stress, providing positive buffer for Maharashtra grid stability."
+  },
+  {
+    "id": 9,
+    "title": "Kharif sowing season forecast positive — food inflation pressure expected to ease",
+    "source": "Agri Ministry",
+    "published_at": "2025-04-04T08:00:00Z",
+    "affected_services": ["food"],
+    "severity": "low",
+    "crisis_level": "low",
+    "combined_severity": 0.18,
+    "summary": "IMD forecasts adequate monsoon this year, supporting expectations of normal kharif crop yields and easing pressure on food price indices."
+  },
+  {
+    "id": 10,
+    "title": "Pune ring road expansion delays causing logistics diversions",
+    "source": "Pune Mirror",
+    "published_at": "2025-04-05T07:40:00Z",
+    "affected_services": ["logistics"],
+    "severity": "moderate",
+    "crisis_level": "moderate",
+    "combined_severity": 0.44,
+    "summary": "Ongoing infrastructure expansion on the Pune ring road is forcing heavy vehicles onto inner city routes, increasing transit time for freight deliveries."
+  },
+  {
+    "id": 11,
+    "title": "US sanctions on Iranian oil shipments tighten — Asia importers scramble",
+    "source": "Wall Street Journal",
+    "published_at": "2025-04-03T10:00:00Z",
+    "affected_services": ["fuel"],
+    "severity": "high",
+    "crisis_level": "high",
+    "combined_severity": 0.80,
+    "summary": "New US sanctions targeting Iranian crude exports are forcing Asian refiners to seek alternative suppliers, increasing demand pressure on Middle East crude."
+  },
+  {
+    "id": 12,
+    "title": "Maharashtra DISCOM announces scheduled load shedding in rural areas",
+    "source": "MSEDCL",
+    "published_at": "2025-04-04T09:30:00Z",
+    "affected_services": ["power"],
+    "severity": "moderate",
+    "crisis_level": "moderate",
+    "combined_severity": 0.55,
+    "summary": "Maharashtra's power distribution company has announced 2-hour load shedding rotation in rural zones to manage peak summer demand. Urban Pune unaffected."
+  },
+  {
+    "id": 13,
+    "title": "India-UAE food import corridor sees 15% increase in inbound cargo",
+    "source": "DGFT",
+    "published_at": "2025-04-03T14:20:00Z",
+    "affected_services": ["food", "logistics"],
+    "severity": "low",
+    "crisis_level": "low",
+    "combined_severity": 0.22,
+    "summary": "Trade volume on the India-UAE corridor is up 15%, reflecting strong demand for edible oil and pulses. Port capacity at Nhava Sheva is under observation."
+  },
+  {
+    "id": 14,
+    "title": "Natural gas prices in Europe surge 8% — LNG re-exports to Asia possible",
+    "source": "Energy Monitor",
+    "published_at": "2025-04-02T18:45:00Z",
+    "affected_services": ["power", "fuel"],
+    "severity": "moderate",
+    "crisis_level": "moderate",
+    "combined_severity": 0.58,
+    "summary": "European gas price spike may redirect LNG cargoes away from Asia, slightly tightening India's gas supply and affecting gas-based power generation."
+  },
+  {
+    "id": 15,
+    "title": "IOC Pune terminal receives full tanker — fuel buffer replenished",
+    "source": "IOC Press",
+    "published_at": "2025-04-05T01:00:00Z",
+    "affected_services": ["fuel"],
+    "severity": "low",
+    "crisis_level": "low",
+    "combined_severity": 0.12,
+    "summary": "Indian Oil Corporation confirms successful delivery to the Pune storage terminal. Current fuel buffer for the city is estimated at 56 hours across all OMC outlets."
+  }
+]

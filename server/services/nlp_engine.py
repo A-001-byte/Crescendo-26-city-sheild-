@@ -1,0 +1,232 @@
+import json
+import os
+import logging
+from typing import Dict, List, Any
+from datetime import datetime
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Load crisis keyword lexicon
+# ---------------------------------------------------------------------------
+_LEXICON_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "keyword_lexicon.json")
+
+try:
+    with open(_LEXICON_PATH, "r", encoding="utf-8") as f:
+        CRISIS_LEXICON: Dict[str, float] = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    logger.warning("Could not load keyword_lexicon.json: %s — using built-in defaults", e)
+    CRISIS_LEXICON = {
+        "blockade": 0.9, "embargo": 0.85, "sanctions": 0.8, "shortage": 0.85,
+        "disruption": 0.8, "conflict": 0.75, "missile": 0.9, "strike": 0.7,
+        "shutdown": 0.8, "rationing": 0.9, "hoarding": 0.7, "panic buying": 0.85,
+        "price surge": 0.75, "supply chain": 0.6, "crude oil": 0.65,
+        "strait of hormuz": 0.95, "opec cut": 0.8, "pipeline attack": 0.9,
+        "power outage": 0.85, "grid failure": 0.9, "coal shortage": 0.8,
+        "wheat ban": 0.8, "food inflation": 0.7, "export restriction": 0.75,
+        "cyclone": 0.8, "flood": 0.75, "drought": 0.7,
+        "war": 0.95, "invasion": 0.95, "military escalation": 0.9,
+    }
+
+# ---------------------------------------------------------------------------
+# Service keyword mapping
+# ---------------------------------------------------------------------------
+SERVICE_KEYWORDS: Dict[str, List[str]] = {
+    "fuel": [
+        "oil", "crude", "petrol", "diesel", "lpg", "gas", "opec", "hormuz",
+        "refinery", "pipeline", "brent", "wti", "fuel", "petroleum", "kerosene",
+        "energy", "barrel", "tanker", "drilling", "rig",
+    ],
+    "power": [
+        "electricity", "grid", "coal", "power plant", "outage", "solar", "energy",
+        "blackout", "load shedding", "thermal", "hydroelectric", "nuclear power",
+        "voltage", "substation", "transmission", "distribution",
+    ],
+    "food": [
+        "wheat", "rice", "food", "grain", "crop", "agriculture", "famine",
+        "export ban", "harvest", "fertilizer", "food inflation", "vegetable",
+        "pulse", "sugar", "dairy", "edible oil", "onion", "tomato", "potato",
+        "ration", "buffer stock", "nafed",
+    ],
+    "logistics": [
+        "shipping", "port", "freight", "supply chain", "transport", "road",
+        "railway", "container", "truck", "highway", "border", "customs",
+        "warehouse", "distribution", "cargo", "fleet", "transit", "import",
+        "export", "trade route",
+    ],
+}
+
+# India-relevant location and entity terms
+INDIA_TERMS = [
+    "india", "indian", "mumbai", "delhi", "pune", "bangalore", "chennai",
+    "hyderabad", "kolkata", "gujarat", "maharashtra", "rajasthan", "up",
+    "bpcl", "hpcl", "ioc", "ongc", "msedcl", "cea", "ndtv", "et",
+    "rupee", "inr", "jnpt", "nhava sheva", "mundra", "paradip",
+    "vizag", "visakhapatnam", "mangaluru", "navi mumbai",
+]
+
+# Initialise VADER once
+_vader = SentimentIntensityAnalyzer()
+
+
+# ---------------------------------------------------------------------------
+# Core analysis functions
+# ---------------------------------------------------------------------------
+
+def analyze_article(article: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Full NLP analysis pipeline for a single article.
+
+    Steps:
+    1. VADER sentiment on title + description
+    2. Crisis keyword matching -> keyword_score
+    3. Service category classification
+    4. India relevance check
+    5. Combined severity computation
+    6. Crisis level categorisation
+    """
+    title: str = article.get("title") or ""
+    description: str = article.get("description") or ""
+    content: str = article.get("content") or ""
+
+    combined_text = f"{title} {description} {content}".lower()
+    short_text = f"{title} {description}".lower()
+
+    # Step 1: VADER sentiment
+    scores = _vader.polarity_scores(short_text if short_text.strip() else combined_text)
+    vader_compound: float = scores["compound"]
+    vader_negative: float = scores["neg"]
+
+    # Step 2: Keyword matching
+    matched_keywords: List[str] = []
+    keyword_weights: List[float] = []
+
+    for kw, weight in CRISIS_LEXICON.items():
+        if kw.lower() in combined_text:
+            matched_keywords.append(kw)
+            keyword_weights.append(weight)
+
+    if keyword_weights:
+        # Use weighted average of top-5 matched keywords
+        top_weights = sorted(keyword_weights, reverse=True)[:5]
+        keyword_score = sum(top_weights) / len(top_weights)
+    else:
+        keyword_score = 0.0
+
+    # Step 3: Service classification
+    affected_services: List[str] = []
+    for service, keywords in SERVICE_KEYWORDS.items():
+        for kw in keywords:
+            if kw in combined_text:
+                if service not in affected_services:
+                    affected_services.append(service)
+                break
+
+    # Step 4: India relevance
+    india_hits = sum(1 for term in INDIA_TERMS if term in combined_text)
+    india_relevance = min(1.0, india_hits / 3.0)  # saturates at 3+ hits
+
+    # Step 5: Combined severity
+    # Weights: vader_neg 30%, keyword_score 50%, india_relevance 20%
+    combined_severity = (
+        (vader_negative * 0.30)
+        + (keyword_score * 0.50)
+        + (india_relevance * 0.20)
+    )
+    combined_severity = round(min(1.0, combined_severity), 4)
+
+    # Step 6: Crisis level
+    if combined_severity < 0.3:
+        crisis_level = "low"
+    elif combined_severity < 0.5:
+        crisis_level = "moderate"
+    elif combined_severity < 0.7:
+        crisis_level = "high"
+    else:
+        crisis_level = "critical"
+
+    # Summary (first 150 chars of description or title)
+    summary_src = description if description else title
+    summary = summary_src[:150].strip()
+
+    return {
+        "title": title,
+        "source": article.get("source", "Unknown"),
+        "published_at": article.get("published_at", ""),
+        "url": article.get("url", ""),
+        "vader_compound": round(vader_compound, 4),
+        "vader_negative": round(vader_negative, 4),
+        "keyword_score": round(keyword_score, 4),
+        "matched_keywords": matched_keywords,
+        "affected_services": affected_services,
+        "india_relevance": round(india_relevance, 4),
+        "combined_severity": combined_severity,
+        "crisis_level": crisis_level,
+        "summary": summary,
+    }
+
+
+def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Analyze a list of articles and aggregate results by service category.
+
+    Returns:
+        service_signals: per-service aggregated metrics
+        critical_events: articles with crisis_level == "critical"
+        high_events: articles with crisis_level == "high"
+        avg_severity: mean combined_severity across all articles
+        timestamp: ISO-format UTC time of analysis
+    """
+    analyses = [analyze_article(a) for a in articles]
+
+    # Initialise service aggregation
+    service_data: Dict[str, Dict] = {
+        svc: {"scores": [], "keywords": [], "count": 0}
+        for svc in SERVICE_KEYWORDS
+    }
+
+    for analysis in analyses:
+        for svc in analysis["affected_services"]:
+            if svc in service_data:
+                service_data[svc]["scores"].append(analysis["combined_severity"])
+                service_data[svc]["keywords"].extend(analysis["matched_keywords"])
+                service_data[svc]["count"] += 1
+
+    service_signals: Dict[str, Dict] = {}
+    for svc, data in service_data.items():
+        if data["scores"]:
+            avg_score = sum(data["scores"]) / len(data["scores"])
+        else:
+            avg_score = 0.0
+
+        # Top keywords by frequency
+        kw_freq: Dict[str, int] = {}
+        for kw in data["keywords"]:
+            kw_freq[kw] = kw_freq.get(kw, 0) + 1
+        top_keywords = sorted(kw_freq, key=lambda k: kw_freq[k], reverse=True)[:5]
+
+        service_signals[svc] = {
+            "score": round(avg_score, 4),
+            "article_count": data["count"],
+            "top_keywords": top_keywords,
+        }
+
+    critical_events = [a for a in analyses if a["crisis_level"] == "critical"]
+    high_events = [a for a in analyses if a["crisis_level"] == "high"]
+
+    if analyses:
+        avg_severity = sum(a["combined_severity"] for a in analyses) / len(analyses)
+    else:
+        avg_severity = 0.0
+
+    return {
+        "service_signals": service_signals,
+        "critical_events": critical_events,
+        "high_events": high_events,
+        "all_analyses": analyses,
+        "total_articles": len(analyses),
+        "avg_severity": round(avg_severity, 4),
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }

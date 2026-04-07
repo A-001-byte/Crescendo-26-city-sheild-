@@ -1,0 +1,10 @@
+flask==3.0.0
+flask-cors
+flask-socketio
+python-dotenv
+requests
+vaderSentiment
+pydantic
+apscheduler
+eventlet
+gunicorn

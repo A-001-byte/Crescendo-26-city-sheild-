@@ -1,0 +1,30 @@
+{
+  "fuel": {
+    "label": "Fuel",
+    "color": "#F97316",
+    "icon": "Flame",
+    "description": "Petroleum products, LPG, CNG supply",
+    "unit": "hours buffer"
+  },
+  "power": {
+    "label": "Power",
+    "color": "#FACC15",
+    "icon": "Zap",
+    "description": "Electricity grid stability and load",
+    "unit": "GW demand"
+  },
+  "food": {
+    "label": "Food",
+    "color": "#22C55E",
+    "icon": "Wheat",
+    "description": "Food grains, PDS, APMC supply",
+    "unit": "days stock"
+  },
+  "logistics": {
+    "label": "Logistics",
+    "color": "#6366F1",
+    "icon": "Truck",
+    "description": "Freight, transport, supply chain",
+    "unit": "% capacity"
+  }
+}

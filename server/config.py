@@ -1,0 +1,47 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class Config:
+    # API Keys
+    NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
+    ALPHA_VANTAGE_KEY = os.getenv("ALPHA_VANTAGE_KEY", "")
+    TWILIO_SID = os.getenv("TWILIO_SID", "")
+    TWILIO_AUTH = os.getenv("TWILIO_AUTH", "")
+
+    # Flask settings
+    SECRET_KEY = os.getenv("FLASK_SECRET", "cityshield-dev-secret-key-2024")
+    DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
+
+    # External API base URLs
+    GDELT_BASE_URL = os.getenv(
+        "GDELT_BASE_URL",
+        "https://api.gdeltproject.org/api/v2/doc/doc"
+    )
+    NEWSAPI_BASE_URL = os.getenv(
+        "NEWSAPI_BASE_URL",
+        "https://newsapi.org/v2/everything"
+    )
+    ALPHA_VANTAGE_BASE_URL = os.getenv(
+        "ALPHA_VANTAGE_BASE_URL",
+        "https://www.alphavantage.co/query"
+    )
+
+    # Cache TTLs (seconds)
+    NEWS_CACHE_TTL = int(os.getenv("NEWS_CACHE_TTL", "900"))   # 15 minutes
+    OIL_CACHE_TTL = int(os.getenv("OIL_CACHE_TTL", "1800"))   # 30 minutes
+
+    # City config
+    CITY = os.getenv("CITY", "Pune")
+    COUNTRY_CODE = os.getenv("COUNTRY_CODE", "IN")
+
+    # Scheduler
+    REFRESH_INTERVAL_MINUTES = int(os.getenv("REFRESH_INTERVAL_MINUTES", "15"))
+
+    # CORS
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+
+
+config = Config()
