@@ -1,4 +1,5 @@
 import time
+import copy
 from utils.constants import CACHE_TTL_SECONDS
 
 _cache = {
@@ -16,10 +17,10 @@ def get_cached_risk(calculate_fn):
     now = time.time()
 
     if _cache["data"] is not None and (now - _cache["timestamp"]) < CACHE_TTL_SECONDS:
-        return _cache["data"]
+        return copy.deepcopy(_cache["data"])
 
     result = calculate_fn()
-    _cache["data"] = result
+    _cache["data"] = copy.deepcopy(result)
     _cache["timestamp"] = now
     return result
 
