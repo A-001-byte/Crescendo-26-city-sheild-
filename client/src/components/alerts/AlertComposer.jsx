@@ -73,10 +73,10 @@ export default function AlertComposer() {
   const severityColor = getSeverityColor(severity)
 
   return (
-    <div className="bg-bg-card border border-border-default rounded-xl shadow-lg overflow-hidden h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-border-default">
-        <h3 className="font-heading font-semibold text-text-primary">Compose Alert</h3>
-        <p className="text-xs text-text-muted">Dispatch behaviorally-framed citizen notifications</p>
+    <div className="rounded-2xl shadow-lg overflow-hidden h-full flex flex-col" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
+      <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid #EFF6FF' }}>
+        <h3 className="font-heading font-semibold" style={{ color: '#0F172A' }}>Compose Alert</h3>
+        <p className="text-xs" style={{ color: '#64748B' }}>Dispatch behaviorally-framed citizen notifications</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -86,7 +86,8 @@ export default function AlertComposer() {
           <select
             value={ward}
             onChange={e => setWard(e.target.value)}
-            className="w-full bg-bg-elevated border border-border-default text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-border-active"
+            className="w-full text-sm rounded-xl px-3 py-2 focus:outline-none transition-colors"
+            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
           >
             {WARDS.map(w => <option key={w} value={w}>{w}</option>)}
           </select>
@@ -100,10 +101,10 @@ export default function AlertComposer() {
               <button
                 key={s.key}
                 onClick={() => setService(s.key)}
-                className="px-3 py-1.5 rounded-lg text-xs font-mono border transition-all"
+                className="px-3 py-1.5 rounded-xl text-xs font-mono border transition-all"
                 style={{
-                  borderColor: service === s.key ? s.color : '#2A3142',
-                  backgroundColor: service === s.key ? `${s.color}20` : 'transparent',
+                  borderColor: service === s.key ? s.color : '#E2E8F0',
+                  backgroundColor: service === s.key ? `${s.color}15` : '#F8FAFC',
                   color: service === s.key ? s.color : '#64748B',
                 }}
               >
@@ -126,13 +127,13 @@ export default function AlertComposer() {
                   onClick={() => setSeverity(key)}
                   className="p-3 rounded-xl border text-left transition-all"
                   style={{
-                    borderColor: isActive ? c : '#2A3142',
-                    backgroundColor: isActive ? `${c}15` : 'transparent',
+                    borderColor: isActive ? c : '#E2E8F0',
+                    backgroundColor: isActive ? `${c}10` : '#F8FAFC',
                   }}
                 >
                   <Icon className="w-4 h-4 mb-1" style={{ color: c }} />
-                  <div className="text-xs font-semibold" style={{ color: isActive ? c : '#94A3B8' }}>{label}</div>
-                  <div className="text-[10px] text-text-muted">{desc}</div>
+                  <div className="text-xs font-semibold" style={{ color: isActive ? c : '#64748B' }}>{label}</div>
+                  <div className="text-[10px]" style={{ color: '#94A3B8' }}>{desc}</div>
                 </button>
               )
             })}
@@ -168,13 +169,14 @@ export default function AlertComposer() {
             onChange={e => setMessage(e.target.value.slice(0, MAX_CHARS))}
             rows={3}
             placeholder="Enter alert message..."
-            className="w-full bg-bg-elevated border border-border-default text-text-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-border-active resize-none"
+            className="w-full text-sm rounded-xl px-3 py-2 focus:outline-none resize-none transition-colors"
+            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
           />
         </div>
 
         {/* Behavioral Frame */}
         <div>
-          <div className="flex items-center justify-between p-3 bg-bg-elevated rounded-xl border border-border-default">
+          <div className="flex items-center justify-between p-3 rounded-xl border" style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
             <div>
               <div className="text-xs font-semibold text-text-primary">Behavioral Framing</div>
               <div className="text-[10px] text-text-muted">Add social norm nudge to reduce panic</div>
@@ -203,9 +205,9 @@ export default function AlertComposer() {
                 onClick={() => setChannels(c => ({ ...c, [key]: !c[key] }))}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-all"
                 style={{
-                  borderColor: channels[key] ? '#3B82F6' : '#2A3142',
-                  backgroundColor: channels[key] ? '#3B82F620' : 'transparent',
-                  color: channels[key] ? '#93C5FD' : '#64748B',
+                  borderColor: channels[key] ? '#3B82F6' : '#E2E8F0',
+                  backgroundColor: channels[key] ? '#EFF6FF' : '#F8FAFC',
+                  color: channels[key] ? '#3B82F6' : '#64748B',
                 }}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -221,14 +223,14 @@ export default function AlertComposer() {
           <div>
             <label className="block text-xs text-text-muted mb-1.5">Preview</label>
             <div className="space-y-2">
-              <div className="p-2.5 bg-bg-elevated rounded-lg border border-border-default">
-                <div className="text-[10px] text-text-muted mb-1">SMS (160 chars)</div>
-                <p className="text-xs text-text-secondary font-mono">{smsPreview}</p>
+              <div className="p-2.5 rounded-xl border" style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
+                <div className="text-[10px] mb-1" style={{ color: '#94A3B8' }}>SMS (160 chars)</div>
+                <p className="text-xs font-mono" style={{ color: '#334155' }}>{smsPreview}</p>
               </div>
               {channels.whatsapp && (
-                <div className="p-2.5 bg-bg-elevated rounded-lg border border-border-default">
-                  <div className="text-[10px] text-text-muted mb-1">WhatsApp</div>
-                  <p className="text-xs text-text-secondary whitespace-pre-wrap">{waPreview}</p>
+                <div className="p-2.5 rounded-xl border" style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
+                  <div className="text-[10px] mb-1" style={{ color: '#94A3B8' }}>WhatsApp</div>
+                  <p className="text-xs whitespace-pre-wrap" style={{ color: '#334155' }}>{waPreview}</p>
                 </div>
               )}
             </div>
@@ -237,7 +239,7 @@ export default function AlertComposer() {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border-default flex-shrink-0">
+      <div className="px-4 py-3 flex-shrink-0" style={{ borderTop: '1px solid #EFF6FF' }}>
         {success && (
           <div className="mb-2 px-3 py-2 rounded-lg bg-risk-low/20 border border-risk-low/40 text-xs text-risk-low flex items-center gap-2">
             <Check className="w-3.5 h-3.5" /> Alert dispatched successfully
@@ -262,15 +264,16 @@ export default function AlertComposer() {
       {/* Confirm Modal */}
       {showConfirm && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 rounded-xl">
-          <div className="bg-bg-elevated border border-border-default rounded-xl p-6 mx-4 max-w-sm w-full shadow-2xl">
-            <h4 className="font-heading font-bold text-text-primary mb-2">Confirm Dispatch</h4>
-            <p className="text-sm text-text-secondary mb-4">
+        <div className="rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
+            <h4 className="font-heading font-bold mb-2" style={{ color: '#0F172A' }}>Confirm Dispatch</h4>
+            <p className="text-sm mb-4" style={{ color: '#475569' }}>
               Send <strong style={{ color: severityColor }}>{severity}</strong> alert to <strong>{ward}</strong> via {Object.keys(channels).filter(k => channels[k]).join(', ')}?
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-2 rounded-lg border border-border-default text-text-secondary hover:text-text-primary text-sm"
+                className="flex-1 py-2 rounded-xl text-sm transition-colors"
+                style={{ border: '1px solid #E2E8F0', color: '#64748B', background: '#F8FAFC' }}
               >
                 Cancel
               </button>

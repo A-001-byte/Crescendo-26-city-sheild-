@@ -25,13 +25,13 @@ const SERVICES = [
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-bg-elevated border border-border-default rounded-xl p-3 shadow-xl text-xs">
-      <p className="font-mono text-text-secondary mb-2">{label}</p>
+    <div className="rounded-xl p-3 shadow-xl text-xs" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
+      <p className="font-mono mb-2" style={{ color: '#475569' }}>{label}</p>
       {payload.map(p => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-            <span className="text-text-secondary">{p.name}</span>
+            <span style={{ color: '#475569' }}>{p.name}</span>
           </div>
           <span className="font-mono font-bold" style={{ color: p.color }}>{p.value.toFixed(1)}</span>
         </div>
@@ -42,7 +42,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function RiskTimeline() {
   return (
-    <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg h-full flex flex-col">
+    <div className="rounded-2xl p-4 shadow-lg h-full flex flex-col" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading font-semibold text-text-primary text-sm">7-Day Risk Trend</h3>
         <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ export default function RiskTimeline() {
             <ReferenceArea y1={3} y2={6} fill="#F59E0B" fillOpacity={0.04} />
             <ReferenceArea y1={6} y2={10} fill="#EF4444" fillOpacity={0.04} />
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A3142" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
             <XAxis
               dataKey="day"
               tick={{ fill: '#64748B', fontSize: 11, fontFamily: '"Plus Jakarta Sans"' }}

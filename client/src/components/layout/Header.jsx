@@ -1,7 +1,6 @@
 import { useLocation } from 'react-router-dom'
-import { Bell, ChevronDown } from 'lucide-react'
+import { Bell, ChevronDown, Shield } from 'lucide-react'
 import { useCrisis } from '../../context/CrisisContext'
-import GlobalEventTicker from '../dashboard/GlobalEventTicker'
 
 const PAGE_TITLES = {
   '/': 'Dashboard',
@@ -11,7 +10,7 @@ const PAGE_TITLES = {
   '/settings': 'Settings',
 }
 
-export default function Header() {
+export default function Header({ onToggleSidebar }) {
   const location = useLocation()
   const title = PAGE_TITLES[location.pathname] || 'CityShield'
   const { wsConnected, alerts, selectedCity, setSelectedCity, demoActive } = useCrisis()
@@ -23,14 +22,19 @@ export default function Header() {
   const wsLabel = wsConnected ? 'Live' : 'Offline'
 
   return (
-    <header className="h-16 flex items-center px-5 gap-4 bg-bg-secondary border-b border-border-default flex-shrink-0">
+    <header className="h-16 flex items-center px-5 gap-4 bg-bg-secondary border-b border-border-default flex-shrink-0 shadow-sm relative z-10">
+      {/* Sidebar Toggle */}
+      <button
+        onClick={onToggleSidebar}
+        className="p-2 -ml-2 rounded-lg text-text-secondary hover:text-accent-blue hover:bg-bg-elevated transition-colors flex items-center gap-2 group"
+      >
+        <Shield className="w-6 h-6 text-accent-blue group-hover:scale-110 transition-transform duration-200" />
+      </button>
+
       {/* Page Title */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0 border-l border-border-default pl-4">
         <h1 className="font-heading font-semibold text-text-primary text-base">{title}</h1>
       </div>
-
-      {/* Ticker */}
-      <GlobalEventTicker />
 
       {/* Right Controls */}
       <div className="flex items-center gap-3 flex-shrink-0 ml-auto">

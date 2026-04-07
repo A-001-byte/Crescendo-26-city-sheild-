@@ -36,22 +36,23 @@ function WardDetailPanel({ ward, onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 320, opacity: 0 }}
       transition={{ duration: 0.25 }}
-      className="absolute top-4 right-4 z-[1000] w-72 bg-bg-card border border-border-default rounded-xl shadow-2xl p-4"
+      className="absolute top-4 right-4 z-[1000] w-72 rounded-xl shadow-2xl p-4"
+      style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-heading font-bold text-text-primary">{ward.name}</h3>
+          <h3 className="font-heading font-bold" style={{ color: '#0F172A' }}>{ward.name}</h3>
           <span className="text-xs font-mono" style={{ color: scoreColor }}>
             {getRiskLabel(ward.riskScore)}
           </span>
         </div>
-        <button onClick={onClose} className="p-1 rounded hover:bg-bg-elevated text-text-muted hover:text-text-primary">
+        <button onClick={onClose} className="p-1 rounded hover:bg-blue-50 transition-colors" style={{ color: '#64748B' }}>
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Risk Score */}
-      <div className="flex items-center gap-3 mb-4 p-2 rounded-lg bg-bg-elevated">
+      <div className="flex items-center gap-3 mb-4 p-2 rounded-lg" style={{ background: '#F0F9FF' }}>
         <div className="text-3xl font-mono font-bold" style={{ color: scoreColor }}>
           {ward.riskScore?.toFixed(1)}
         </div>
@@ -67,8 +68,8 @@ function WardDetailPanel({ ward, onClose }) {
       <div className="space-y-2 mb-3">
         {services.map(s => (
           <div key={s.label} className="flex items-center gap-2">
-            <span className="text-xs text-text-muted w-16">{s.label}</span>
-            <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
+            <span className="text-xs w-16" style={{ color: '#64748B' }}>{s.label}</span>
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#E2E8F0' }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${(s.score / 10) * 100}%`, backgroundColor: s.color }}
@@ -86,7 +87,7 @@ function WardDetailPanel({ ward, onClose }) {
           { label: 'Fuel Stations', value: ward.fuelStations },
           { label: 'Hospitals', value: ward.hospitals },
         ].map(s => (
-          <div key={s.label} className="text-center p-2 rounded-lg bg-bg-elevated">
+          <div key={s.label} className="text-center p-2 rounded-lg" style={{ background: '#F0F9FF' }}>
             <div className="text-sm font-mono font-bold text-text-primary">{s.value}</div>
             <div className="text-[10px] text-text-muted">{s.label}</div>
           </div>
@@ -105,11 +106,11 @@ export default function CityMap() {
       <MapContainer
         center={[18.5204, 73.8567]}
         zoom={12}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', zIndex: 10 }}
         zoomControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution="&copy; CartoDB"
           subdomains="abcd"
           maxZoom={19}
@@ -119,20 +120,24 @@ export default function CityMap() {
       </MapContainer>
 
       {/* Layer Toggle */}
-      <div className="absolute top-4 left-4 z-[1000] bg-bg-card border border-border-default rounded-xl shadow-xl p-2 flex flex-col gap-1">
-        <div className="flex items-center gap-1.5 px-2 pb-1 border-b border-border-default mb-1">
-          <Layers className="w-3.5 h-3.5 text-text-muted" />
-          <span className="text-[10px] text-text-muted uppercase tracking-wider">Layers</span>
+      <div className="absolute top-4 left-4 z-[1000] rounded-xl shadow-lg p-2 flex flex-col gap-1" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
+        <div className="flex items-center gap-1.5 px-2 pb-1 border-b mb-1" style={{ borderColor: '#DBEAFE' }}>
+          <Layers className="w-3.5 h-3.5" style={{ color: '#3B82F6' }} />
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: '#64748B' }}>Layers</span>
         </div>
         {LAYER_BUTTONS.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => setActiveLayer(id)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
               activeLayer === id
-                ? 'bg-accent-blue/20 text-accent-blue border border-accent-blue/40'
-                : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                ? 'text-white shadow-sm'
+                : 'hover:bg-blue-50'
             }`}
+            style={activeLayer === id
+              ? { background: 'linear-gradient(135deg,#3B82F6,#06B6D4)', color: '#fff' }
+              : { color: '#334155' }
+            }
           >
             <Icon className="w-3.5 h-3.5" />
             {label}
@@ -142,17 +147,17 @@ export default function CityMap() {
 
       {/* Legend for wards */}
       {activeLayer === 'wards' && (
-        <div className="absolute bottom-8 left-4 z-[1000] bg-bg-card border border-border-default rounded-xl shadow-xl p-3">
-          <div className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Risk Level</div>
+        <div className="absolute bottom-8 left-4 z-[1000] rounded-xl shadow-lg p-3" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
+          <div className="text-[10px] mb-2 uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>Risk Level</div>
           {[
             { label: 'Low (1–3)', color: '#10B981' },
             { label: 'Moderate (4–6)', color: '#F59E0B' },
             { label: 'High (7–8)', color: '#EF4444' },
-            { label: 'Critical (9–10)', color: '#DC2626' },
+            { label: 'Critical (9–10)', color: '#7F1D1D' },
           ].map(l => (
             <div key={l.label} className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.color, opacity: 0.7 }} />
-              <span className="text-[11px] text-text-secondary">{l.label}</span>
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: l.color, opacity: 0.85 }} />
+              <span className="text-[11px]" style={{ color: '#475569' }}>{l.label}</span>
             </div>
           ))}
         </div>
