@@ -2,9 +2,20 @@
 # CityShield News Fetcher
 # Responsibility: Fetch live headlines from NewsAPI with fallback to mock data.
 
+import os
 import requests
 
-NEWSAPI_KEY = "aa02239960f24c318f4beae91c419ade"
+NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY", "aa02239960f24c318f4beae91c419ade")
+if not NEWSAPI_KEY:
+    raise EnvironmentError(
+        "NEWSAPI_KEY environment variable is not set. "
+        "Export it before running: export NEWSAPI_KEY=your_key_here"
+    )
+
+TRUSTED_DOMAINS = (
+    "reuters.com,bbc.com,thehindu.com,ndtv.com,"
+    "economictimes.indiatimes.com,livemint.com,businessstandard.com"
+)
 
 MOCK_HEADLINES = [
     "Oil prices surge amid geopolitical tensions",
@@ -17,14 +28,16 @@ MOCK_HEADLINES = [
 
 def get_news_headlines() -> list[str]:
     """
-    Fetches up to 10 latest English headlines from NewsAPI matching the query.
+    Fetches up to 10 latest English headlines from trusted sources via NewsAPI.
     Falls back to MOCK_HEADLINES if the API call fails for any reason.
     """
+    print("[CityShield] Fetching live news headlines...")
     try:
         url = "https://newsapi.org/v2/everything"
         params = {
             "q": "oil OR fuel OR OPEC OR shortage OR crisis OR war OR sanctions OR flood OR nuclear OR blackout",
             "language": "en",
+            "domains": TRUSTED_DOMAINS,
             "sortBy": "publishedAt",
             "pageSize": 10,
             "apiKey": NEWSAPI_KEY,
@@ -39,10 +52,22 @@ def get_news_headlines() -> list[str]:
             if article.get("title")
         ]
 
-        if headlines:
-            return headlines[:10]
+        if not headlines:
+            headlines = MOCK_HEADLINES
+            suffix = " (mock)"
+        else:
+            headlines = headlines[:10]
+            suffix = ""
 
-        return MOCK_HEADLINES
+        print("\nHeadlines Retrieved:")
+        for i, h in enumerate(headlines, 1):
+            print(f"  {i}. {h}")
+        print(f"\nTotal Headlines Fetched: {len(headlines)}{suffix}\n")
+        return headlines
 
     except Exception:
+        print("\nHeadlines Retrieved: (mock data — API unavailable)")
+        for i, h in enumerate(MOCK_HEADLINES, 1):
+            print(f"  {i}. {h}")
+        print(f"\nTotal Headlines Fetched: {len(MOCK_HEADLINES)} (mock)\n")
         return MOCK_HEADLINES
