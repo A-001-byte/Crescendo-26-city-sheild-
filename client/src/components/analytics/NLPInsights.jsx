@@ -10,24 +10,26 @@ const SERVICE_COLORS = {
   logistics: '#6366F1',
 }
 
-function BertAccuracyBar({ confidence, label }) {
-  // confidence: 0-1 from BERT model, label: 'REAL' | 'FAKE' | null
+function CredibilityBar({ confidence, label }) {
+  // confidence = probability this article is real news (from BERT)
+  // label = 'REAL' | 'FAKE' — what BERT classified it as
   if (confidence == null) {
     return <span className="text-[10px] text-text-muted font-mono">—</span>
   }
-  const pct = confidence * 100
-  const isReal = label === 'REAL'
-  const color = isReal
-    ? confidence >= 0.9 ? '#10B981' : '#F59E0B'
-    : '#EF4444'
+  // credibility = how likely the article is genuine news (0–100%)
+  const credibility = label === 'REAL' ? confidence : 1 - confidence
+  const pct = credibility * 100
+  const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'
+  const tag = pct >= 80 ? 'Credible' : pct >= 50 ? 'Uncertain' : 'Unreliable'
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+        </div>
+        <span className="text-[10px] font-mono w-8 text-right" style={{ color }}>{pct.toFixed(0)}%</span>
       </div>
-      <span className="text-[10px] font-mono leading-none" style={{ color }}>
-        {pct.toFixed(0)}%
-      </span>
+      <span className="text-[9px] font-mono" style={{ color }}>{tag}</span>
     </div>
   )
 }
@@ -79,7 +81,7 @@ export default function NLPInsights() {
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Time</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Source</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Headline</th>
-                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">BERT Accuracy</th>
+                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">Credibility</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Severity</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Services</th>
               </tr>
@@ -95,7 +97,7 @@ export default function NLPInsights() {
                     {truncate(e.title, 60)}
                   </td>
                   <td className="px-4 py-2.5 w-28">
-                    <BertAccuracyBar confidence={e.bert_confidence} label={e.bert_label} />
+                    <CredibilityBar confidence={e.bert_confidence} label={e.bert_label} />
                   </td>
                   <td className="px-4 py-2.5">
                     <StatusBadge severity={e.severity} />
