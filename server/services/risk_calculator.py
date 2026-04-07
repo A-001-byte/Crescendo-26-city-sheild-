@@ -1,9 +1,6 @@
 import random
 import json
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
-from nlp_engine import get_nlp_signals
+from services.nlp_engine import get_nlp_signals
 
 def get_oil_price():
     """

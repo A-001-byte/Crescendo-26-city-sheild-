@@ -104,7 +104,23 @@ def get_keyword_score(headlines: list[str]) -> float:
 
 
 # ---------------------------------------------------------------------------
-# 4. FINAL NLP SIGNAL FUNCTION  — this is what the risk engine calls
+# 4. STAGE HELPER
+# ---------------------------------------------------------------------------
+
+def _run_stage(stage_name: str, fn, fallback, *args, **kwargs):
+    """
+    Calls fn(*args, **kwargs), returns its result on success.
+    On any exception, logs the stage name + error and returns fallback.
+    """
+    try:
+        return fn(*args, **kwargs)
+    except Exception as e:
+        print(f"[CityShield] Stage '{stage_name}' failed: {e} — using fallback ({fallback})")
+        return fallback
+
+
+# ---------------------------------------------------------------------------
+# 5. FINAL NLP SIGNAL FUNCTION  — this is what the risk engine calls
 # ---------------------------------------------------------------------------
 
 def get_nlp_signals() -> dict:
@@ -121,35 +137,12 @@ def get_nlp_signals() -> dict:
         }
     """
     try:
-        try:
-            headlines = get_news_headlines()
-        except Exception:
-            headlines = []
-
-        try:
-            sentiment = get_sentiment(headlines)
-        except Exception:
-            sentiment = 0.0
-
-        try:
-            keyword_score = get_keyword_score(headlines)
-        except Exception:
-            keyword_score = 0.0
-
-        try:
-            gdelt_score = get_gdelt_score()
-        except Exception:
-            gdelt_score = 5.0
-
-        try:
-            market_score = get_market_score()
-        except Exception:
-            market_score = 4.0
-
-        try:
-            supply_score = get_supply_score()
-        except Exception:
-            supply_score = 3.0
+        headlines     = _run_stage("news_fetch",    get_news_headlines,  [])
+        sentiment     = _run_stage("sentiment",     get_sentiment,       0.0,  headlines)
+        keyword_score = _run_stage("keyword_score", get_keyword_score,   0.0,  headlines)
+        gdelt_score   = _run_stage("gdelt",         get_gdelt_score,     5.0)
+        market_score  = _run_stage("market",        get_market_score,    4.0)
+        supply_score  = _run_stage("supply",        get_supply_score,    3.0)
 
         return {
             "sentiment":     sentiment,
