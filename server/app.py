@@ -63,6 +63,7 @@ def create_app() -> Flask:
     from routes.city import city_bp
     from routes.risk_routes import risk_bp
     from routes.auth import auth_bp
+    from routes.analytics import analytics_bp
 
     app.register_blueprint(crisis_bp)
     app.register_blueprint(events_bp)
@@ -70,6 +71,14 @@ def create_app() -> Flask:
     app.register_blueprint(city_bp)
     app.register_blueprint(risk_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(analytics_bp)
+
+    # Ensure DB schema exists when a database URL is configured.
+    try:
+        from db.postgres import ensure_schema
+        ensure_schema()
+    except Exception as exc:
+        logger.warning("DB schema initialization skipped/failed: %s", exc)
 
     # ------------------------------------------------------------------
     # Root health-check
@@ -166,6 +175,17 @@ def _build_snapshot() -> dict:
         oil_data=oil_data,
     )
 
+    # Persist analytics in background to avoid blocking request/socket response.
+    try:
+        eventlet.spawn_n(
+            _persist_analytics_payload,
+            crs_result,
+            oil_data,
+            nlp_detailed,
+        )
+    except Exception as exc:
+        logger.warning("Could not schedule analytics persistence: %s", exc)
+
     return {
         "crs": crs_result,
         "oil": oil_data,
@@ -176,6 +196,22 @@ def _build_snapshot() -> dict:
             "timestamp": nlp_detailed["timestamp"],
         },
     }
+
+
+def _persist_analytics_payload(crs_result: dict, oil_data: dict, nlp_detailed: dict) -> None:
+    try:
+        from config import config
+        from services.analytics_store import persist_events, persist_snapshot_bundle
+
+        persist_snapshot_bundle(
+            city=config.CITY,
+            city_payload=crs_result,
+            oil_data=oil_data,
+            sentiment=nlp_detailed.get("sentiment"),
+        )
+        persist_events(nlp_detailed.get("all_analyses", []))
+    except Exception as exc:
+        logger.warning("Analytics persistence failed: %s", exc)
 
 
 def broadcast_update() -> None:

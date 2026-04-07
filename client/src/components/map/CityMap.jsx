@@ -157,9 +157,8 @@ export default function CityMap() {
         zoomControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution="&copy; CartoDB"
-          className="grayscale opacity-50"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
         />
         {activeLayer === 'wards' && <WardLayer onWardSelect={handleWardSelect} />}
         <HeatmapOverlay activeLayer={activeLayer} />

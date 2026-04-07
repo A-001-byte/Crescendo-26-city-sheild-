@@ -67,8 +67,15 @@ def dispatch_alert():
             }), 400
 
         from services.alert_dispatcher import dispatch_alert as do_dispatch
+        from services.analytics_store import persist_alert
 
         result = do_dispatch(ward=ward, message=message, severity=severity, channels=channels)
+
+        # Best-effort DB persistence for analytics alert volume charts.
+        try:
+            persist_alert(message=message, severity=severity, category=ward)
+        except Exception as persist_exc:
+            logger.warning("Alert persisted skipped/failed: %s", persist_exc)
 
         return jsonify({
             "success": True,

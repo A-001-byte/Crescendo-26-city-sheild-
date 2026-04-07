@@ -47,6 +47,11 @@ class Config:
     # Model warm-up — set PREWARM_BERT=false to skip (e.g. in test environments)
     PREWARM_BERT = os.getenv("PREWARM_BERT", "true").lower() in ("true", "1", "yes")
 
+    # PostgreSQL (Neon)
+    NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL", os.getenv("DATABASE_URL", ""))
+    DB_POOL_MIN_CONN = int(os.getenv("DB_POOL_MIN_CONN", "1"))
+    DB_POOL_MAX_CONN = int(os.getenv("DB_POOL_MAX_CONN", "5"))
+
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 
