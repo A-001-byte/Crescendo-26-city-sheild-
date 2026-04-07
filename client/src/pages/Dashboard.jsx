@@ -19,7 +19,7 @@ const STAT_CARDS = [
 ]
 
 export default function Dashboard() {
-  const { score, services, loading, lastUpdated } = useCrisis()
+  const { score, services, loading, lastUpdated, selectedCity } = useCrisis()
   const [cityRiskData, setCityRiskData] = useState(null)
   const [cityRiskLoading, setCityRiskLoading] = useState(true)
 
@@ -27,8 +27,9 @@ export default function Dashboard() {
     let mounted = true
 
     const loadCityRisk = async () => {
+      if (mounted) setCityRiskLoading(true)
       try {
-        const data = await getCityRisk()
+        const data = await getCityRisk(selectedCity)
         if (mounted && data) {
           setCityRiskData(data?.data ?? data)
         }
@@ -41,7 +42,7 @@ export default function Dashboard() {
 
     loadCityRisk()
     return () => { mounted = false }
-  }, [])
+  }, [selectedCity])
 
   const normalizedScores = useMemo(() => {
     if (!cityRiskData) return null
@@ -53,14 +54,19 @@ export default function Dashboard() {
   const apiTransport = Number(normalizedScores?.transport)
   const apiPower = Number(normalizedScores?.power)
 
+  const riskCandidates = [
+    { key: 'fuel', value: Number.isFinite(apiFuel) ? apiFuel : null },
+    { key: 'food', value: Number.isFinite(apiFood) ? apiFood : null },
+    { key: 'transport', value: Number.isFinite(apiTransport) ? apiTransport : null },
+    { key: 'power', value: Number.isFinite(apiPower) ? apiPower : null },
+  ]
+  const validRiskCandidates = riskCandidates.filter((c) => Number.isFinite(c.value))
+
   const primaryRiskCategory =
     cityRiskData?.primary_risk?.category ||
-    [
-      { key: 'fuel', value: Number.isFinite(apiFuel) ? apiFuel : -Infinity },
-      { key: 'food', value: Number.isFinite(apiFood) ? apiFood : -Infinity },
-      { key: 'transport', value: Number.isFinite(apiTransport) ? apiTransport : -Infinity },
-      { key: 'power', value: Number.isFinite(apiPower) ? apiPower : -Infinity },
-    ].sort((a, b) => b.value - a.value)[0]?.key
+    (validRiskCandidates.length
+      ? [...validRiskCandidates].sort((a, b) => b.value - a.value)[0]?.key
+      : undefined)
 
   const recommendationText =
     cityRiskData?.recommendation ||
@@ -73,26 +79,16 @@ export default function Dashboard() {
       ? `Alert: ${primaryRiskCategory} risk is currently the most elevated.`
       : undefined)
 
-  const primaryRiskScore = [
-    { key: 'fuel', value: Number.isFinite(apiFuel) ? apiFuel : -Infinity },
-    { key: 'food', value: Number.isFinite(apiFood) ? apiFood : -Infinity },
-    { key: 'transport', value: Number.isFinite(apiTransport) ? apiTransport : -Infinity },
-    { key: 'power', value: Number.isFinite(apiPower) ? apiPower : -Infinity },
-  ].find((s) => s.key === primaryRiskCategory)?.value
+  const primaryRiskScore = primaryRiskCategory
+    ? riskCandidates.find((s) => s.key === primaryRiskCategory)?.value
+    : null
 
-  const primaryRiskColor =
-    primaryRiskScore >= 8 ? '#DC2626' :
-    primaryRiskScore >= 4 ? '#EAB308' :
-    '#16A34A'
+  const primaryRiskColor = Number.isFinite(primaryRiskScore)
+    ? getRiskColor(primaryRiskScore)
+    : '#64748B'
 
-  const bannerBg =
-    primaryRiskScore >= 8 ? '#FEE2E2' :
-    primaryRiskScore >= 4 ? '#FEF9C3' :
-    '#DCFCE7'
-  const bannerTextColor =
-    primaryRiskScore >= 8 ? '#7F1D1D' :
-    primaryRiskScore >= 4 ? '#713F12' :
-    '#14532D'
+  const bannerBg = primaryRiskColor === '#DC2626' ? '#FEE2E2' : primaryRiskColor === '#EAB308' ? '#FEF9C3' : '#DCFCE7'
+  const bannerTextColor = primaryRiskColor === '#DC2626' ? '#7F1D1D' : primaryRiskColor === '#EAB308' ? '#713F12' : '#14532D'
 
   const resolvedScore = Number.isFinite(Number(cityRiskData?.score))
     ? Number(cityRiskData.score)
@@ -118,7 +114,7 @@ export default function Dashboard() {
     },
   }
 
-  if (loading || cityRiskLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <LoadingSpinner size="lg" />
@@ -179,7 +175,13 @@ export default function Dashboard() {
             )}
           </div>
           <div className="flex-1 min-h-[200px]">
-            <CityRiskGauge score={resolvedScore} />
+            {cityRiskLoading ? (
+              <div className="h-full flex items-center justify-center">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : (
+              <CityRiskGauge score={resolvedScore} />
+            )}
           </div>
         </div>
 

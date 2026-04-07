@@ -35,10 +35,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -46,12 +46,15 @@ body {
 
 .font-heading,
 .font-body,
-.font-mono,
 input,
 select,
 button,
 textarea {
   font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
 ::-webkit-scrollbar {

@@ -3,9 +3,7 @@ const toNumber = (value) => {
   return Number.isFinite(n) ? n : null
 }
 
-// Keep mock mode on until backend risk endpoints are ready.
-// Flip to false to switch to live API instantly.
-const USE_MOCK = true
+const FORCE_MOCK = String(import.meta.env.VITE_USE_MOCK_RISK || '').toLowerCase() === 'true'
 const MOCK_DELAY_MS = 1500
 
 const MOCK_CITY_DATA = {
@@ -56,9 +54,11 @@ const normalizeCityRisk = (payload) => {
   const normalizedScores = { fuel, food, transport, power }
 
   const overallScore = toNumber(raw.score ?? raw.overall_crs)
-  const derivedScore = overallScore ?? toNumber(
-    [fuel, food, transport, power].filter((v) => v != null).reduce((sum, v, _, arr) => sum + v / arr.length, 0)
-  )
+  const filteredScores = [fuel, food, transport, power].filter((v) => v != null)
+  const averageScore = filteredScores.length
+    ? toNumber(filteredScores.reduce((sum, v) => sum + v, 0) / filteredScores.length)
+    : null
+  const derivedScore = overallScore ?? averageScore
 
   return {
     ...raw,
@@ -67,6 +67,35 @@ const normalizeCityRisk = (payload) => {
     alerts: Array.isArray(raw.alerts) ? raw.alerts : [],
     recommendation: raw.recommendation,
     primary_risk: raw.primary_risk,
+  }
+}
+
+const normalizeSingleWardRisk = (payload, wardName) => {
+  const raw = unwrap(payload) || {}
+  const services = raw.services || raw.scores || raw
+
+  const fuel = toNumber(services?.fuel?.score ?? services?.fuel)
+  const food = toNumber(services?.food?.score ?? services?.food)
+  const transport = toNumber(
+    services?.transport?.score ??
+    services?.transport ??
+    services?.logistics?.score ??
+    services?.logistics
+  )
+  const power = toNumber(services?.power?.score ?? services?.power)
+
+  const values = [fuel, food, transport, power].filter((v) => v != null)
+  const score = values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : null
+
+  return {
+    ward_name: raw.ward_name || raw.name || wardName,
+    score: toNumber(raw.riskScore ?? raw.score ?? score),
+    services: {
+      fuel,
+      food,
+      transport,
+      power,
+    },
   }
 }
 
@@ -134,22 +163,37 @@ const normalizeWardRisk = (payload) => {
   return { ward_scores: {}, ward_services: {} }
 }
 
-export const getCityRisk = async () => {
-  if (USE_MOCK) {
+export const getCityRisk = async (cityName) => {
+  if (FORCE_MOCK) {
     await sleep(MOCK_DELAY_MS)
     return normalizeCityRisk(MOCK_CITY_DATA)
   }
 
-  const payload = await fetchJson('/api/risk/city-score')
-  return normalizeCityRisk(payload)
+  try {
+    const query = cityName ? `?city=${encodeURIComponent(cityName)}` : ''
+    const payload = await fetchJson(`/api/crisis/score${query}`)
+    return normalizeCityRisk(payload)
+  } catch {
+    await sleep(MOCK_DELAY_MS)
+    return normalizeCityRisk(MOCK_CITY_DATA)
+  }
 }
 
-export const getWardRisk = async () => {
-  if (USE_MOCK) {
-    await sleep(MOCK_DELAY_MS)
-    return normalizeWardRisk(MOCK_WARD_DATA)
+export const getWardRisk = async (wardName) => {
+  if (!wardName) {
+    throw new Error('wardName is required for getWardRisk')
   }
 
-  const payload = await fetchJson('/api/risk/ward-scores')
-  return normalizeWardRisk(payload)
+  if (FORCE_MOCK) {
+    await sleep(MOCK_DELAY_MS)
+    return normalizeSingleWardRisk(MOCK_WARD_DATA[wardName] || {}, wardName)
+  }
+
+  try {
+    const payload = await fetchJson(`/api/crisis/score/ward/${encodeURIComponent(wardName)}`)
+    return normalizeSingleWardRisk(payload, wardName)
+  } catch {
+    await sleep(MOCK_DELAY_MS)
+    return normalizeSingleWardRisk(MOCK_WARD_DATA[wardName] || {}, wardName)
+  }
 }

@@ -2,13 +2,16 @@ import { Bell, ChevronDown, Shield } from 'lucide-react'
 import { useCrisis } from '../../context/CrisisContext'
 
 export default function Header({ onToggleSidebar }) {
-  const { wsConnected, alerts, selectedCity, setSelectedCity, demoActive } = useCrisis()
+  const { wsConnected, alerts, selectedCity, setSelectedCity, demoActive, lastUpdated } = useCrisis()
 
   const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
   const activeAlerts = alerts?.filter(a => a.severity === 'high' || a.severity === 'critical').length || 0
 
   const wsColor = wsConnected ? '#10B981' : '#EF4444'
   const wsLabel = wsConnected ? 'Live' : 'Offline'
+  const formattedLastUpdated = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString('en-IN', { timeStyle: 'short' })
+    : 'stale'
 
   return (
     <header className="h-16 flex items-center px-5 gap-4 bg-bg-secondary border-b border-border-default flex-shrink-0 relative z-10">
@@ -23,8 +26,8 @@ export default function Header({ onToggleSidebar }) {
       {/* Page Title */}
       <div className="flex items-center gap-2 flex-shrink-0 border-l border-border-default pl-4">
         <div className="flex flex-col">
-          <h1 className="font-heading font-bold text-text-primary text-base">CityShield - Pune Risk Dashboard</h1>
-          <span className="text-[10px] text-text-muted">Last updated: just now</span>
+          <h1 className="font-heading font-bold text-text-primary text-base">CityShield - {selectedCity} Risk Dashboard</h1>
+          <span className="text-[10px] text-text-muted">Last updated: {formattedLastUpdated}</span>
         </div>
       </div>
 

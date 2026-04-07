@@ -2,11 +2,10 @@ import { GeoJSON } from 'react-leaflet'
 import { useEffect, useMemo, useState } from 'react'
 import wardData from '../../data/puneWards.geojson'
 import { getWardRisk } from '../../api/riskApi'
+import { getRiskColor } from '../../utils/riskCalculations'
 
 function getWardRiskColor(score) {
-  if (score >= 8) return '#EF4444'
-  if (score >= 4) return '#FACC15'
-  return '#10B981'
+  return getRiskColor(score)
 }
 
 function getWardStyle(feature, selectedName) {
@@ -32,34 +31,35 @@ export default function WardLayer({ onWardSelect }) {
 
     const loadWardRisk = async () => {
       try {
-        const response = await getWardRisk()
-        const payload = response?.data ?? response
-        if (!mounted || !payload) return
+        const wardNames = wardData.features
+          .map((feature) => feature?.properties?.name)
+          .filter(Boolean)
 
-        if (Array.isArray(payload)) {
-          const mapped = payload.reduce((acc, item) => {
-            const wardName = item?.ward || item?.name || item?.ward_name
-            const wardScore = Number(item?.riskScore ?? item?.score ?? item?.risk)
-            if (wardName && Number.isFinite(wardScore)) {
-              acc[wardName] = wardScore
-            }
-            return acc
-          }, {})
-          setLiveWardScores(Object.keys(mapped).length ? mapped : null)
-          return
-        }
+        const wardResponses = await Promise.all(
+          wardNames.map(async (name) => ({ name, data: await getWardRisk(name) }))
+        )
 
-        if (payload.ward_scores && typeof payload.ward_scores === 'object') {
-          setLiveWardScores(payload.ward_scores)
-          if (payload.ward_services && typeof payload.ward_services === 'object') {
-            setLiveWardServices(payload.ward_services)
+        if (!mounted) return
+
+        const scores = {}
+        const services = {}
+
+        wardResponses.forEach(({ name, data }) => {
+          const score = Number(data?.score)
+          if (Number.isFinite(score)) {
+            scores[name] = score
           }
-          return
-        }
 
-        if (typeof payload === 'object') {
-          setLiveWardScores(payload)
-        }
+          services[name] = {
+            fuel: Number(data?.services?.fuel),
+            food: Number(data?.services?.food),
+            transport: Number(data?.services?.transport),
+            power: Number(data?.services?.power),
+          }
+        })
+
+        setLiveWardScores(Object.keys(scores).length ? scores : null)
+        setLiveWardServices(Object.keys(services).length ? services : null)
       } catch {
         // Keep existing GeoJSON ward scores when API is unavailable.
       }
@@ -78,8 +78,9 @@ export default function WardLayer({ onWardSelect }) {
         const name = feature?.properties?.name
         const liveScore = Number(liveWardScores?.[name])
         const serviceData = liveWardServices?.[name] || {}
+        const hasServiceData = Object.values(serviceData).some((v) => Number.isFinite(Number(v)))
 
-        if (!Number.isFinite(liveScore) && !serviceData) return feature
+        if (!Number.isFinite(liveScore) && !hasServiceData) return feature
 
         return {
           ...feature,

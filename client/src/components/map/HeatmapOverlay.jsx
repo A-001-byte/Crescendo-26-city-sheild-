@@ -27,18 +27,18 @@ const FUEL_STATIONS = [
 ]
 
 const HOSPITALS = [
-  { name: 'Ruby Hall Clinic', lat: 18.534, lng: 73.888, priorityLevel: 1, bedsAvailable: 120, riskLevel: 'Low' },
-  { name: 'Sahyadri Hospital', lat: 18.519, lng: 73.851, priorityLevel: 1, bedsAvailable: 80, riskLevel: 'Moderate' },
-  { name: 'Deenanath Mangeshkar', lat: 18.514, lng: 73.826, priorityLevel: 1, bedsAvailable: 95, riskLevel: 'Low' },
-  { name: 'KEM Hospital', lat: 18.512, lng: 73.858, priorityLevel: 2, bedsAvailable: 70, riskLevel: 'Moderate' },
-  { name: 'Jehangir Hospital', lat: 18.531, lng: 73.882, priorityLevel: 1, bedsAvailable: 110, riskLevel: 'Low' },
-  { name: 'Sancheti Hospital', lat: 18.527, lng: 73.857, priorityLevel: 2, bedsAvailable: 88, riskLevel: 'Low' },
-  { name: 'Poona Hospital', lat: 18.505, lng: 73.870, priorityLevel: 2, bedsAvailable: 52, riskLevel: 'High' },
-  { name: 'Aditya Birla', lat: 18.556, lng: 73.812, priorityLevel: 1, bedsAvailable: 130, riskLevel: 'Low' },
-  { name: 'Noble Hospital', lat: 18.496, lng: 73.883, priorityLevel: 2, bedsAvailable: 48, riskLevel: 'High' },
-  { name: 'Columbia Asia', lat: 18.561, lng: 73.798, priorityLevel: 1, bedsAvailable: 125, riskLevel: 'Low' },
-  { name: 'Inamdar Hospital', lat: 18.503, lng: 73.928, priorityLevel: 2, bedsAvailable: 60, riskLevel: 'Moderate' },
-  { name: 'Pimpri Civil Hospital', lat: 18.618, lng: 73.808, priorityLevel: 2, bedsAvailable: 35, riskLevel: 'High' },
+  { name: 'Ruby Hall Clinic', lat: 18.534, lng: 73.888, priorityLevel: 1, fuelBuffer: 120, riskLevel: 'Low' },
+  { name: 'Sahyadri Hospital', lat: 18.519, lng: 73.851, priorityLevel: 1, fuelBuffer: 80, riskLevel: 'Moderate' },
+  { name: 'Deenanath Mangeshkar', lat: 18.514, lng: 73.826, priorityLevel: 1, fuelBuffer: 95, riskLevel: 'Low' },
+  { name: 'KEM Hospital', lat: 18.512, lng: 73.858, priorityLevel: 2, fuelBuffer: 70, riskLevel: 'Moderate' },
+  { name: 'Jehangir Hospital', lat: 18.531, lng: 73.882, priorityLevel: 1, fuelBuffer: 110, riskLevel: 'Low' },
+  { name: 'Sancheti Hospital', lat: 18.527, lng: 73.857, priorityLevel: 2, fuelBuffer: 88, riskLevel: 'Low' },
+  { name: 'Poona Hospital', lat: 18.505, lng: 73.870, priorityLevel: 2, fuelBuffer: 52, riskLevel: 'High' },
+  { name: 'Aditya Birla', lat: 18.556, lng: 73.812, priorityLevel: 1, fuelBuffer: 130, riskLevel: 'Low' },
+  { name: 'Noble Hospital', lat: 18.496, lng: 73.883, priorityLevel: 2, fuelBuffer: 48, riskLevel: 'High' },
+  { name: 'Columbia Asia', lat: 18.561, lng: 73.798, priorityLevel: 1, fuelBuffer: 125, riskLevel: 'Low' },
+  { name: 'Inamdar Hospital', lat: 18.503, lng: 73.928, priorityLevel: 2, fuelBuffer: 60, riskLevel: 'Moderate' },
+  { name: 'Pimpri Civil Hospital', lat: 18.618, lng: 73.808, priorityLevel: 2, fuelBuffer: 35, riskLevel: 'High' },
 ]
 
 const fuelStatusColor = (status) => {
@@ -101,7 +101,7 @@ function HospitalTooltipMarker({ h }) {
       <div style="font-size:11px;color:#475569;margin-bottom:2px">Risk: <strong style="color:${
         h.riskLevel === 'Low' ? '#10B981' : h.riskLevel === 'Moderate' ? '#F59E0B' : h.riskLevel === 'High' ? '#EF4444' : '#7F1D1D'
       }">${h.riskLevel}</strong></div>
-      <div style="font-size:11px;color:#475569">Beds Available: <strong>${h.bedsAvailable}</strong></div>
+      <div style="font-size:11px;color:#475569">Capacity Available: <strong>${h.fuelBuffer}</strong></div>
     </div>
   `
 
@@ -151,7 +151,7 @@ export default function HeatmapOverlay({ activeLayer }) {
               <div style="font-weight:700;font-size:13px;color:#0F172A;margin-bottom:4px">${h.name}</div>
               <div style="font-size:11px;color:#475569;margin-bottom:2px">Priority Level <strong>${h.priorityLevel}</strong></div>
               <div style="font-size:11px;margin-bottom:2px">Risk: <strong style="color:${riskColor}">${h.riskLevel}</strong></div>
-              <div style="font-size:11px;color:#475569">Beds Available: <strong>${h.bedsAvailable}</strong></div>
+              <div style="font-size:11px;color:#475569">Capacity Available: <strong>${h.fuelBuffer}</strong></div>
             </div>
           `
 

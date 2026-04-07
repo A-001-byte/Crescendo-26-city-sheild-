@@ -151,11 +151,11 @@ export default function CityMap() {
           <div className="text-[10px] mb-2 uppercase tracking-wider font-semibold" style={{ color: '#64748B' }}>Risk Level</div>
           {[
             { label: 'Low (1–3)', color: '#16A34A' },
-            { label: 'Medium (4–7)', color: '#EAB308' },
-            { label: 'High (8–10)', color: '#DC2626' },
+            { label: 'Medium (4–5)', color: '#EAB308' },
+            { label: 'High (6–10)', color: '#DC2626' },
           ].map(l => (
             <div key={l.label} className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3" style={{ backgroundColor: l.color, opacity: 0.95 }} />
+              <div className="w-3 h-3" style={{ backgroundColor: l.color, opacity: 0.28 }} />
               <span className="text-[11px]" style={{ color: '#475569' }}>{l.label}</span>
             </div>
           ))}

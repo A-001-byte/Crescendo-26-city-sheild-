@@ -50,8 +50,15 @@ export default function AlertHistory() {
   const items = useMemo(() => {
     const source = alerts?.length ? alerts : HISTORY
     return source.map((a, index) => {
-      const severity = (a.severity || a.level || 'low').toLowerCase()
-      const normalizedSeverity = ['high', 'moderate', 'low'].includes(severity) ? severity : 'low'
+      const severity = String(a.severity || a.level || 'low').toLowerCase()
+      const severityMap = {
+        red: 'high',
+        orange: 'moderate',
+        yellow: 'moderate',
+        green: 'low',
+      }
+      const mappedSeverity = severityMap[severity] || severity
+      const normalizedSeverity = ['high', 'moderate', 'low'].includes(mappedSeverity) ? mappedSeverity : 'low'
       return {
         id: a.id || `h-${index}`,
         severity: normalizedSeverity,
@@ -98,7 +105,7 @@ export default function AlertHistory() {
           <select
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value)}
-            className="text-xs px-3 py-2 focus:outline-none"
+            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
           >
             <option value="all">All Severity</option>
@@ -109,7 +116,7 @@ export default function AlertHistory() {
           <select
             value={serviceFilter}
             onChange={e => setServiceFilter(e.target.value)}
-            className="text-xs px-3 py-2 focus:outline-none"
+            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
           >
             <option value="all">All Services</option>

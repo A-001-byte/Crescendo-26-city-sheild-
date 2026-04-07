@@ -21,7 +21,7 @@ const SERVICES = [
   { key: 'fuel', color: '#DC2626', label: 'Fuel' },
   { key: 'power', color: '#EAB308', label: 'Power' },
   { key: 'food', color: '#16A34A', label: 'Food' },
-  { key: 'logistics', color: '#DC2626', label: 'Logistics' },
+  { key: 'logistics', color: '#6366F1', label: 'Logistics' },
 ]
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -115,9 +115,9 @@ export default function RiskTimeline() {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
             {/* Risk zones */}
-            <ReferenceArea y1={1} y2={3} fill="#16A34A" fillOpacity={0.04} />
-            <ReferenceArea y1={4} y2={7} fill="#EAB308" fillOpacity={0.04} />
-            <ReferenceArea y1={8} y2={10} fill="#DC2626" fillOpacity={0.04} />
+            <ReferenceArea y1={0} y2={3} fill="#16A34A" fillOpacity={0.04} />
+            <ReferenceArea y1={3} y2={7} fill="#EAB308" fillOpacity={0.04} />
+            <ReferenceArea y1={7} y2={10} fill="#DC2626" fillOpacity={0.04} />
 
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
             <XAxis

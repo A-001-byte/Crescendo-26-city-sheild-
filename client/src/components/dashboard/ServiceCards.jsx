@@ -1,6 +1,6 @@
 import { Flame, Zap, Wheat, Truck, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
-import { getRiskColor, getRiskLabel } from '../../utils/riskCalculations'
+import { getRiskBand, getRiskColor, getRiskLabel } from '../../utils/riskCalculations'
 
 const SERVICES = [
   {
@@ -48,7 +48,8 @@ function ServiceCard({ service, data }) {
   const trendArr = Array.isArray(data?.trend) ? data.trend : service.defaultTrend
   const trend = trendArr.map((v) => ({ v }))
   const riskColor = getRiskColor(score)
-  const cardBg = score >= 8 ? '#FEF2F2' : score >= 4 ? '#FEFCE8' : '#F0FDF4'
+  const riskBand = getRiskBand(score)
+  const cardBg = riskBand === 'low' ? '#F0FDF4' : riskBand === 'medium' ? '#FEFCE8' : '#FEF2F2'
 
   const DeltaIcon = delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus
   const deltaColor = delta > 0.05 ? '#EF4444' : delta < -0.05 ? '#10B981' : '#94A3B8'
