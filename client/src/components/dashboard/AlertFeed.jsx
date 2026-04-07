@@ -1,17 +1,6 @@
 import { useCrisis } from '../../context/CrisisContext'
 import { motion } from 'framer-motion'
 
-const HARDCODED_ALERTS = [
-  { id: 1, severity: 'high', ward: 'Katraj' },
-  { id: 2, severity: 'high', ward: 'Hadapsar' },
-  { id: 3, severity: 'moderate', ward: 'Swargate' },
-  { id: 4, severity: 'moderate', ward: 'Pimpri' },
-  { id: 5, severity: 'low', ward: 'Kothrud' },
-  { id: 6, severity: 'high', ward: 'All Wards' },
-  { id: 7, severity: 'moderate', ward: 'Chinchwad' },
-  { id: 8, severity: 'low', ward: 'Aundh' },
-]
-
 const SEVERITY_CONFIG = {
   high: { bg: '#EF4444', text: '#FFFFFF', label: 'HIGH RISK' },
   moderate: { bg: '#EAB308', text: '#FFFFFF', label: 'MEDIUM RISK' },
@@ -20,7 +9,7 @@ const SEVERITY_CONFIG = {
 
 export default function AlertFeed() {
   const { alerts } = useCrisis()
-  const items = (alerts?.length ? alerts : HARDCODED_ALERTS).slice(0, 12)
+  const items = (alerts || []).slice(0, 12)
 
   return (
     <div
@@ -41,6 +30,9 @@ export default function AlertFeed() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+        {!items.length && (
+          <div className="text-xs text-slate-500 py-6 text-center">No live alerts yet.</div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((alert, idx) => {
           const cfg = SEVERITY_CONFIG[alert.severity] || SEVERITY_CONFIG.low
@@ -56,7 +48,7 @@ export default function AlertFeed() {
               style={{ backgroundColor: cfg.bg, color: cfg.text }}
             >
               <span className="font-bold tracking-widest text-sm text-center">
-                {cfg.label} — {alert.ward.toUpperCase()}
+                {cfg.label} — {(alert.ward || 'All Wards').toUpperCase()}
               </span>
             </motion.div>
           )
