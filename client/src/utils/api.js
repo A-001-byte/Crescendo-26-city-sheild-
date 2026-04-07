@@ -134,7 +134,9 @@ export const loginUser = async ({ identity, password }) => {
     return unwrap(res)
   } catch (error) {
     const message = error?.response?.data?.message || error?.response?.data?.error || 'Login failed. Please try again.'
-    throw new Error(message)
+    const wrapped = new Error(message, { cause: error })
+    if (!('cause' in wrapped)) wrapped.cause = error
+    throw wrapped
   }
 }
 
@@ -144,7 +146,9 @@ export const signupUser = async ({ fullName, email, password }) => {
     return unwrap(res)
   } catch (error) {
     const message = error?.response?.data?.message || error?.response?.data?.error || 'Signup failed. Please try again.'
-    throw new Error(message)
+    const wrapped = new Error(message, { cause: error })
+    if (!('cause' in wrapped)) wrapped.cause = error
+    throw wrapped
   }
 }
 
