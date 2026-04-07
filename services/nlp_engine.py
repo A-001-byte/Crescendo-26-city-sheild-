@@ -4,33 +4,7 @@
 # Does NOT contain any risk logic.
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-# ---------------------------------------------------------------------------
-# 1. NEWS FETCHER 
-# ---------------------------------------------------------------------------
-
-import requests
-
-NEWSAPI_KEY = "aa02239960f24c318f4beae91c419ade" 
-
-def fetch_news() -> list[str]:
-    url = "https://newsapi.org/v2/everything"
-    params = {
-        "q": "oil OR fuel OR crude OR OPEC OR shortage OR energy crisis",
-        "language": "en",
-        "sortBy": "publishedAt",
-        "pageSize": 10,
-        "apiKey": NEWSAPI_KEY
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-
-    headlines = [
-        article["title"]
-        for article in data.get("articles", [])
-        if article.get("title")
-    ]
-    return headlines[:10]
+from news_fetcher import get_news_headlines
 
 
 # ---------------------------------------------------------------------------
@@ -57,17 +31,22 @@ def get_sentiment(headlines: list[str]) -> float:
 
 KEYWORDS: dict[str, float] = {
     "war":      3.5,
-    "crisis":   3.0,
+    "crisis":   3.5,
     "shortage": 3.0,
-    "opec":     2.0,   # lowercased for matching
+    "sanctions": 2.5,
+    "opec":     1.5,
     "surge":    2.0,
-    "cut":      1.5,
+    "nuke":     4.0,
+    "nuclear":  4.0,
+    "flood":    3.0,
+    "attack":   3.0,
+    "blackout": 3.0,
 }
 
 def get_keyword_score(headlines: list[str]) -> float:
     """
     Scans headlines for weighted keywords and returns the cumulative score.
-    Higher score â more high-impact terms present in the news.
+    Higher score = more high-impact terms present in the news.
     """
     score = 0.0
     for headline in headlines:
@@ -79,7 +58,7 @@ def get_keyword_score(headlines: list[str]) -> float:
 
 
 # ---------------------------------------------------------------------------
-# 4. FINAL NLP SIGNAL FUNCTION  â this is what the risk engine calls
+# 4. FINAL NLP SIGNAL FUNCTION  — this is what the risk engine calls
 # ---------------------------------------------------------------------------
 
 def get_nlp_signals() -> dict:
@@ -92,7 +71,7 @@ def get_nlp_signals() -> dict:
             "keyword_score": float  # 0 to ~N (unbounded, higher = more alarming)
         }
     """
-    headlines = fetch_news()
+    headlines = get_news_headlines()
 
     return {
         "sentiment":     get_sentiment(headlines),
