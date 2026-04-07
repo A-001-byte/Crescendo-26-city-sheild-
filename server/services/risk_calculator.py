@@ -1,5 +1,7 @@
 import random
 import json
+import os
+from datetime import datetime, timedelta
 
 # Mock functions as per the user's context description
 # In a real scenario, these would be imported from their respective modules.
@@ -181,6 +183,80 @@ def calculate_risk():
         "trend": trend,
         "primary_risk": primary_risk,
         "recommendation": recommendation
+    }
+
+
+def _alert_level_from_score(score: float) -> str:
+    if score <= 3:
+        return "green"
+    if score <= 5:
+        return "yellow"
+    if score <= 7:
+        return "orange"
+    return "red"
+
+
+def _load_wards() -> list:
+    try:
+        wards_path = os.path.join(os.path.dirname(__file__), "..", "data", "pune_wards.json")
+        with open(wards_path, "r", encoding="utf-8") as f:
+            wards = json.load(f)
+            return [w.get("name", "") for w in wards if w.get("name")]
+    except Exception:
+        return []
+
+
+def calculate_city_risk_score(nlp_signals=None, oil_data=None):
+    """Compatibility wrapper used by existing routes/app code."""
+    result = calculate_risk()
+    scores = result.get("scores", {})
+    component_keys = ["fuel", "food", "transport", "power"]
+    base_values = [scores.get(k, 1) for k in component_keys]
+    overall = round(sum(base_values) / len(base_values), 2)
+
+    ward_scores = {}
+    for ward in _load_wards():
+        ward_scores[ward] = max(1, min(10, round(overall + random.choice([-1, 0, 1]), 2)))
+
+    return {
+        "overall_crs": overall,
+        "alert_level": _alert_level_from_score(overall),
+        "scores": {k: scores.get(k, 1) for k in component_keys},
+        "sentiment": scores.get("sentiment", 0),
+        "alerts": result.get("alerts", []),
+        "trend": result.get("trend", {}),
+        "primary_risk": result.get("primary_risk", {}),
+        "recommendation": result.get("recommendation", ""),
+        "ward_scores": ward_scores,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+
+
+def get_historical_scores(days: int = 7):
+    history = []
+    days = max(1, min(int(days), 30))
+    for i in range(days):
+        current = calculate_city_risk_score()
+        history.append({
+            "date": (datetime.utcnow() - timedelta(days=(days - i - 1))).strftime("%Y-%m-%d"),
+            "overall_crs": current.get("overall_crs", 1),
+            "alert_level": current.get("alert_level", "green"),
+        })
+    return history
+
+
+def get_ward_score(ward_name: str):
+    city = calculate_city_risk_score()
+    ward_scores = city.get("ward_scores", {})
+    if ward_name not in ward_scores:
+        return None
+
+    return {
+        "ward": ward_name,
+        "score": ward_scores[ward_name],
+        "overall_crs": city.get("overall_crs", 1),
+        "alert_level": _alert_level_from_score(ward_scores[ward_name]),
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
 # Add a test block

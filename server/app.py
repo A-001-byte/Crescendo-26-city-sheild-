@@ -11,7 +11,7 @@ if _server_dir not in sys.path:
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
@@ -38,6 +38,11 @@ def create_app() -> Flask:
 
     # CORS
     CORS(app)
+
+    @app.before_request
+    def log_api_hit():
+        if request.path.startswith("/api"):
+            print("API HIT")
 
     # SocketIO
     socketio.init_app(

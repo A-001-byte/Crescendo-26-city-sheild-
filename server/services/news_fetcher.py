@@ -464,7 +464,7 @@ def _fetch_from_gdelt(theme: str, country: str) -> List[Dict]:
         "maxrecords": 25,
         "format": "json",
     }
-    resp = requests.get(config.GDELT_BASE_URL, params=params, timeout=15)
+    resp = requests.get(config.GDELT_BASE_URL, params=params, timeout=(0.2, 0.3))
     resp.raise_for_status()
     data = resp.json()
 
