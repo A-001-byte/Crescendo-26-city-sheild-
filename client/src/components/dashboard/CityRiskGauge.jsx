@@ -30,14 +30,13 @@ export default function CityRiskGauge({ score = 6.4 }) {
   // viewBox: 0 0 100 50
   // Arc starts at 10 50 (left) and ends at 90 50 (right)
   // R = 40, Center = 50, 50
-  const normalizedValue = (animatedScore - 1) / 9 // 0 to 1
-  const angleRad = Math.PI - (normalizedValue * Math.PI)
+  const normalizedValue = Math.max(0, Math.min(1, (animatedScore - 1) / 9)) // 0 to 1
+  const minArcProgress = 0.005
+  const safeProgress = Math.max(minArcProgress, normalizedValue)
+  const angleRad = Math.PI - (safeProgress * Math.PI)
   
   const endX = 50 + 40 * Math.cos(angleRad)
   const endY = 50 - 40 * Math.sin(angleRad)
-
-  // Use a small epsilon so the path doesn't break at exact zero calculation
-  const sweepFlag = 0
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-sm">

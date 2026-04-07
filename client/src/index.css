@@ -37,7 +37,11 @@ body {
 }
 
 /* Global ambient shadow for surface boxes */
-[class*="bg-surface-container"] {
+.bg-surface-container,
+.bg-surface-container-low,
+.bg-surface-container-high,
+.bg-surface-container-highest,
+.bg-surface-container-lowest {
   box-shadow: 0 10px 36px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(198, 198, 198, 0.6);
 }
@@ -57,20 +61,20 @@ body {
   background-color: #0d0d0d;
   margin-left: 2px;
   vertical-align: middle;
-  animation: blink 1s step-end infinite;
+  animation: blink-animation 1s step-end infinite;
 }
 
-@keyframes blink {
-  from, to { opacity: 1; }
+@keyframes blink-animation {
+  0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 
 .live-indicator {
-  animation: livePulse 1.8s ease-in-out infinite;
+  animation: live-pulse 1.8s ease-in-out infinite;
   box-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
 }
 
-@keyframes livePulse {
+@keyframes live-pulse {
   0%, 100% {
     transform: scale(1);
     opacity: 0.9;

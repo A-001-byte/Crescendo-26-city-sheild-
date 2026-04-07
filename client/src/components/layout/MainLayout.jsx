@@ -20,7 +20,6 @@ function LayoutInner() {
         <main className="flex-1 pb-32 overflow-y-auto dashboard-scroll snap-y snap-proximity">
           <AnimatePresence mode="wait">
             <motion.div
-              layout
               key={location.pathname}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useCrisis } from '../../context/CrisisContext'
 
 const NAV = [
   { to: '/', icon: 'dashboard', label: 'Dashboard', exact: true },
@@ -11,6 +12,9 @@ const NAV = [
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
+  const { selectedCity, setSelectedCity } = useCrisis()
+
+  const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
 
   return (
     <AnimatePresence>
@@ -43,10 +47,28 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close sidebar"
                 className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors"
               >
-                <span className="material-symbols-outlined text-sm">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">close</span>
               </button>
+            </div>
+
+            <div className="px-8">
+              <div className="relative border border-outline-variant/40 rounded-full overflow-hidden bg-surface-container-lowest">
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full appearance-none bg-transparent font-bold uppercase tracking-widest text-xs px-5 py-3 text-primary focus:outline-none"
+                >
+                  {CITIES.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-sm text-primary">unfold_more</span>
+                </div>
+              </div>
             </div>
 
             <nav className="flex-1 py-8 overflow-y-auto px-6">

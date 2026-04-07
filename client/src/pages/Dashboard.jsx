@@ -7,7 +7,6 @@ import RiskTimeline from '../components/dashboard/RiskTimeline'
 import NewsFeed from '../components/dashboard/NewsFeed'
 import AnimatedCounter from '../components/common/AnimatedCounter'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-import { getRiskColor } from '../utils/riskCalculations'
 import { getCityRisk } from '../api/riskApi'
 
 const STAT_CARDS = [
@@ -21,19 +20,21 @@ export default function Dashboard() {
   const { score, services, loading, lastUpdated, selectedCity } = useCrisis()
   const [cityRiskData, setCityRiskData] = useState(null)
   const [cityRiskLoading, setCityRiskLoading] = useState(true)
+  const [cityRiskError, setCityRiskError] = useState(false)
 
   useEffect(() => {
     let mounted = true
 
     const loadCityRisk = async () => {
       if (mounted) setCityRiskLoading(true)
+      if (mounted) setCityRiskError(false)
       try {
         const data = await getCityRisk(selectedCity)
         if (mounted && data) {
           setCityRiskData(data?.data ?? data)
         }
       } catch {
-        // Keep existing context-driven mock/live fallback when API is unavailable.
+        if (mounted) setCityRiskError(true)
       } finally {
         if (mounted) setCityRiskLoading(false)
       }
@@ -67,27 +68,20 @@ export default function Dashboard() {
       ? [...validRiskCandidates].sort((a, b) => b.value - a.value)[0]?.key
       : undefined)
 
-  const recommendationText =
+  const resolvedRecommendationText =
     cityRiskData?.recommendation ||
     (primaryRiskCategory
       ? `Primary risk is ${primaryRiskCategory}. Prioritize contingency actions for this service.`
-      : undefined)
+      : cityRiskError
+        ? `Monitoring ${selectedCity} with baseline signals. Continue observing service stability.`
+        : 'Monitoring live risk signals and service resilience.')
 
-  const alertBannerText = cityRiskData?.alerts?.[0] ||
+  const resolvedAlertBannerText = cityRiskData?.alerts?.[0] ||
     (primaryRiskCategory
       ? `Alert: ${primaryRiskCategory} risk is currently the most elevated.`
-      : undefined)
-
-  const primaryRiskScore = primaryRiskCategory
-    ? riskCandidates.find((s) => s.key === primaryRiskCategory)?.value
-    : null
-
-  const primaryRiskColor = Number.isFinite(primaryRiskScore)
-    ? getRiskColor(primaryRiskScore)
-    : '#64748B'
-
-  const bannerBg = primaryRiskColor === '#DC2626' ? '#FEE2E2' : primaryRiskColor === '#EAB308' ? '#FEF9C3' : '#DCFCE7'
-  const bannerTextColor = primaryRiskColor === '#DC2626' ? '#7F1D1D' : primaryRiskColor === '#EAB308' ? '#713F12' : '#14532D'
+      : cityRiskError
+        ? `Live risk feed for ${selectedCity} is temporarily unavailable.`
+        : `Live risk feed active for ${selectedCity}.`)
 
   const resolvedScore = Number.isFinite(Number(cityRiskData?.score))
     ? Number(cityRiskData.score)
@@ -135,7 +129,7 @@ export default function Dashboard() {
             <div className="bg-surface-container-lowest rounded-[3rem] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
               <div className="w-full flex items-center gap-3">
                 <span className="material-symbols-outlined text-error">warning</span>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-primary">{alertBannerText || 'High Fuel Risk in Kothrud'}</span>
+                <span className="text-xs font-extrabold uppercase tracking-widest text-primary">{resolvedAlertBannerText}</span>
               </div>
 
               <div className="w-full space-y-1 mt-6">
@@ -147,7 +141,7 @@ export default function Dashboard() {
 
               <div className="w-full space-y-1 mt-6">
                 <span className="text-[10px] uppercase tracking-widest font-extrabold text-primary">RECOMMENDED ACTION: </span>
-                <span className="text-sm font-medium text-secondary">{recommendationText || 'Avoid unnecessary travel'}</span>
+                <span className="text-sm font-medium text-secondary">{resolvedRecommendationText}</span>
               </div>
             </div>
           </div>
@@ -222,9 +216,9 @@ export default function Dashboard() {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-secondary mb-6">Global Briefing</span>
             <div className="bg-surface-container-lowest rounded-[3rem] p-6 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
               <NewsFeed
-                alertBannerText={alertBannerText}
+                alertBannerText={resolvedAlertBannerText}
                 primaryRiskCategory={primaryRiskCategory}
-                recommendationText={recommendationText}
+                recommendationText={resolvedRecommendationText}
               />
             </div>
           </div>

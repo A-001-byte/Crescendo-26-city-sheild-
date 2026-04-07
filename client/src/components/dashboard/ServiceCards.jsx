@@ -14,7 +14,7 @@ const SERVICES = [
   {
     key: 'food',
     label: 'Food Chain',
-    icon: 'water_drop',
+    icon: 'restaurant',
     defaultScore: 5.8,
   },
   {
@@ -28,8 +28,10 @@ const SERVICES = [
 function ServiceCard({ service, data }) {
   const score = data?.score ?? service.defaultScore
   const thresholdPct = Math.max(0, Math.min(100, (score / 10) * 100))
-  const colorToken = score > 7 ? 'bg-error' : score > 5 ? 'bg-tertiary-container' : 'bg-primary'
-  const textColor = score > 7 ? 'text-error' : 'text-primary'
+  const riskBand = score > 7 ? 'high' : score > 5 ? 'medium' : 'low'
+  const colorToken = riskBand === 'high' ? 'bg-error' : riskBand === 'medium' ? 'bg-tertiary-container' : 'bg-primary'
+  const textColor = riskBand === 'high' ? 'text-error' : riskBand === 'medium' ? 'text-tertiary-container' : 'text-primary'
+  const riskLabel = riskBand === 'high' ? 'HIGH' : riskBand === 'medium' ? 'MEDIUM' : 'LOW'
 
   return (
     <div className="space-y-4 pt-4 border-b border-outline-variant/30 pb-6 w-full">
@@ -38,7 +40,7 @@ function ServiceCard({ service, data }) {
             <span className="material-symbols-outlined text-sm">{service.icon}</span>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-secondary">{service.label}</span>
         </div>
-        <span className={`text-2xl font-extrabold letter-spacing-tight ${textColor}`}>{thresholdPct.toFixed(0)}%</span>
+        <span className={`text-2xl font-extrabold letter-spacing-tight ${textColor}`}>RISK {riskLabel}</span>
       </div>
       <div className="h-[2px] w-full bg-outline-variant/30 rounded-full overflow-hidden">
         <div className={`h-full ${colorToken} rounded-full`} style={{ width: `${thresholdPct}%` }}></div>

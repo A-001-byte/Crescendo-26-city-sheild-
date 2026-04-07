@@ -2,9 +2,9 @@ import { useCrisis } from '../../context/CrisisContext'
 import { motion } from 'framer-motion'
 
 const SEVERITY_CONFIG = {
-  high: { bg: '#EF4444', text: '#FFFFFF', label: 'HIGH RISK' },
-  moderate: { bg: '#EAB308', text: '#FFFFFF', label: 'MEDIUM RISK' },
-  low: { bg: '#22C55E', text: '#FFFFFF', label: 'LOW RISK' },
+  high: { bgClass: 'bg-error', textClass: 'text-on-error', label: 'HIGH RISK' },
+  moderate: { bgClass: 'bg-tertiary-container', textClass: 'text-on-tertiary-container', label: 'MEDIUM RISK' },
+  low: { bgClass: 'bg-primary', textClass: 'text-on-primary', label: 'LOW RISK' },
 }
 
 export default function AlertFeed() {
@@ -43,8 +43,7 @@ export default function AlertFeed() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: idx * 0.05, duration: 0.3 }}
-              className="alert-item alert-capsule max-w-md mx-auto w-full flex items-center justify-center p-3 rounded-full shadow-sm cursor-default"
-              style={{ backgroundColor: cfg.bg, color: cfg.text }}
+              className={`alert-item alert-capsule max-w-md mx-auto w-full flex items-center justify-center p-3 rounded-full shadow-sm cursor-default ${cfg.bgClass} ${cfg.textClass}`}
             >
               <span className="font-extrabold tracking-widest text-xs text-center uppercase">
                 {cfg.label} — {(alert.ward || 'All Wards').toUpperCase()}

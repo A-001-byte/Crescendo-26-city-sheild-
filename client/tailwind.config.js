@@ -57,7 +57,7 @@ export default {
           primary: 'var(--color-surface-lowest)',
           secondary: 'var(--color-surface-low)',
           card: 'var(--color-surface-lowest)',
-          elevated: 'var(--color-surface)',
+          elevated: 'var(--color-surface-low)',
         },
         border: {
           default: 'var(--color-outline-variant)',

@@ -7,7 +7,7 @@ import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import WardLayer from './WardLayer'
 import HeatmapOverlay from './HeatmapOverlay'
-import { getRiskColor, getRiskLabel } from '../../utils/riskCalculations'
+import { getRiskColor } from '../../utils/riskCalculations'
 
 // Fix default icon
 let DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow })
@@ -21,7 +21,7 @@ const LAYER_BUTTONS = [
 
 function WardDetailPanel({ ward, onClose, position, mapRect }) {
   if (!ward) return null
-  const scoreColor = ward.riskScore > 7 ? '#ba1a1a' : ward.riskScore > 5 ? '#00397e' : '#000000'
+  const scoreColor = getRiskColor(ward.riskScore)
   const services = [
     { label: 'Fuel', score: ward.fuelScore, color: '#ba1a1a' },
     { label: 'Power', score: ward.powerScore, color: '#000000' },
@@ -55,8 +55,8 @@ function WardDetailPanel({ ward, onClose, position, mapRect }) {
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-secondary mb-1">Ward Matrix</span>
           <h3 className="font-extrabold text-2xl letter-spacing-tight uppercase text-primary">{ward.name}</h3>
         </div>
-        <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-outline-variant/30 transition-colors text-primary">
-          <span className="material-symbols-outlined text-sm">close</span>
+        <button aria-label="Close detail panel" onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-outline-variant/30 transition-colors text-primary">
+          <span aria-hidden="true" className="material-symbols-outlined text-sm">close</span>
         </button>
       </div>
 
@@ -169,9 +169,9 @@ export default function CityMap() {
         <div className="absolute bottom-6 left-6 z-[20] glass-panel rounded-[2rem] p-6 shadow-lg border border-outline-variant/30">
           <div className="text-[10px] mb-4 uppercase tracking-widest font-extrabold text-secondary">Risk Matrix</div>
           {[
-            { label: 'Low', color: '#000000' },
-            { label: 'Medium', color: '#00397e' },
-            { label: 'High', color: '#ba1a1a' },
+            { label: 'Low', color: getRiskColor(2) },
+            { label: 'Medium', color: getRiskColor(4) },
+            { label: 'High', color: getRiskColor(8) },
           ].map(l => (
             <div key={l.label} className="flex items-center gap-3 mb-2 last:mb-0">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: l.color, opacity: 0.8 }} />
