@@ -10,6 +10,7 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const SERVICES = [
   { key: 'fuel', color: '#ba1a1a', label: 'Fuel' },
   { key: 'power', color: '#000000', label: 'Power' },
+  { key: 'food', color: '#22c55e', label: 'Food' },
   { key: 'logistics', color: '#c6c6c6', label: 'Logistics' },
 ]
 

@@ -21,36 +21,39 @@ def _annotate_and_filter_articles(articles: List[Dict]) -> List[Dict]:
     Run BERT fake news classifier on each article title.
     Adds bert_confidence (0-1) and bert_label ('REAL'/'FAKE') to each article.
     Filters out fakes, but keeps all articles (with scores) if all would be removed.
-    Falls back to original articles if model is unavailable.
+    Falls back to original articles if model cannot be loaded.
     """
     try:
         from fake_news_filter import load_model, REAL_THRESHOLD
-        classifier = load_model()
+        classifier = load_model()  # fail hard here — if model can't load, skip BERT entirely
+    except Exception as exc:
+        logger.warning("Fake news model unavailable: %s — skipping BERT filter", exc)
+        return articles
 
-        annotated = []
-        for article in articles:
-            title = article.get("title", "")
-            if not title:
-                annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": True})
-                continue
+    annotated = []
+    for article in articles:
+        title = article.get("title", "")
+        if not title:
+            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": True})
+            continue
+        try:
             result = classifier(title)[0]
-            label = result["label"]
-            score = result["score"]
-            is_real = label == "LABEL_1"
-            confidence = round(score if is_real else 1 - score, 4)
+            from fake_news_filter import normalize_label_confidence
+            is_real, confidence = normalize_label_confidence(result["label"], result["score"])
+            confidence = round(confidence, 4)
             bert_label = "REAL" if is_real else "FAKE"
             bert_verified = is_real and confidence >= REAL_THRESHOLD
             annotated.append({**article, "bert_confidence": confidence, "bert_label": bert_label, "bert_verified": bert_verified})
+        except Exception as exc:
+            logger.warning("BERT failed on article '%s': %s — skipping", title[:50], exc)
+            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": False})
 
-        filtered = [a for a in annotated if a.get("bert_verified", True)]
-        if not filtered:
-            logger.warning("BERT filtered all articles — keeping all with scores")
-            return annotated  # return all annotated but unfiltered
-        logger.info("BERT filter: %d/%d articles verified as real", len(filtered), len(annotated))
-        return filtered
-    except Exception as exc:
-        logger.warning("Fake news filter unavailable: %s — using all articles", exc)
-        return articles
+    filtered = [a for a in annotated if a.get("bert_verified", True)]
+    if not filtered:
+        logger.warning("BERT filtered all articles — keeping all with scores")
+        return annotated
+    logger.info("BERT filter: %d/%d articles verified as real", len(filtered), len(annotated))
+    return filtered
 
 # ---------------------------------------------------------------------------
 # Load crisis keyword lexicon

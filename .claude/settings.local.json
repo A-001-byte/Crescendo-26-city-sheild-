@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Stop-Process -Id 22188 -Force\")",
+      "Bash(python app.py)",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s http://localhost:5000/api/crisis/score)",
+      "Bash(curl -s \"http://localhost:5000/api/crisis/score/history?days=3\")",
+      "Bash(curl -s \"http://localhost:5000/api/crisis/score/ward/Kothrud\")",
+      "Bash(curl -s \"http://localhost:5000/api/risk/ward-scores\")",
+      "Bash(curl -s \"http://localhost:5000/api/events/oil\")",
+      "Bash(curl -s \"http://localhost:5000/api/alerts/templates\")",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s http://localhost:5000/api/risk/city-score)",
+      "Bash(curl -s \"http://localhost:5000/api/events/latest?limit=2\")",
+      "Bash(powershell \"netstat -ano | findstr ' 5000 '\")",
+      "Bash(powershell \"Stop-Process -Id 22944 -Force\")"
+    ]
+  }
+}

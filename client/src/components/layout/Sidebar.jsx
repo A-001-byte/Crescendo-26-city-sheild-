@@ -3,18 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useCrisis } from '../../context/CrisisContext'
 
 const NAV = [
-  { to: '/', icon: 'dashboard', label: 'Dashboard', exact: true },
-  { to: '/map', icon: 'map', label: 'Map View' },
-  { to: '/alerts', icon: 'notifications', label: 'Alerts' },
-  { to: '/analytics', icon: 'analytics', label: 'Analytics' },
-  { to: '/settings', icon: 'settings', label: 'Settings' },
+  { to: '/', label: 'Dashboard', exact: true },
+  { to: '/map', label: 'Map View' },
+  { to: '/alerts', label: 'Alerts' },
+  { to: '/analytics', label: 'Analytics' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
   const { selectedCity, setSelectedCity } = useCrisis()
 
-  const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
+  const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik'] // TODO: extract to src/constants/cities.js when reused elsewhere
 
   return (
     <AnimatePresence>
@@ -73,7 +73,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
             <nav className="flex-1 py-8 overflow-y-auto px-6">
               <div className="space-y-4">
-                {NAV.map(({ to, icon, label, exact }) => {
+                {NAV.map(({ to, label, exact }) => {
                   const isActive = exact
                     ? location.pathname === to
                     : location.pathname.startsWith(to)

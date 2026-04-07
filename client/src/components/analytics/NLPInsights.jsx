@@ -16,8 +16,8 @@ function CredibilityBar({ confidence, label }) {
   if (confidence == null) {
     return <span className="text-[10px] text-text-muted font-mono">—</span>
   }
-  // credibility = how likely the article is genuine news (0–100%)
-  const credibility = label === 'REAL' ? confidence : 1 - confidence
+  // credibility = probability the article is genuine news (backend already normalised to 0-1)
+  const credibility = confidence
   const pct = credibility * 100
   const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'
   const tag = pct >= 80 ? 'Credible' : pct >= 50 ? 'Uncertain' : 'Unreliable'
@@ -42,8 +42,6 @@ export default function NLPInsights() {
     fetchLatestEvents(20).then(d => { if (Array.isArray(d)) setEvents(d) }).catch(() => {})
     fetchSignals().then(d => { if (d) setSignals(d) }).catch(() => {})
   }, [])
-
-  const enrichedEvents = events
 
   return (
     <div className="space-y-4">
@@ -87,7 +85,7 @@ export default function NLPInsights() {
               </tr>
             </thead>
             <tbody>
-              {enrichedEvents.map((e) => (
+              {events.map((e) => (
                 <tr key={e.id} className="border-b border-border-default/50 hover:bg-bg-elevated/40 transition-colors">
                   <td className="px-4 py-2.5 text-text-muted font-mono whitespace-nowrap">
                     {formatRelativeTime(e.published_at)}

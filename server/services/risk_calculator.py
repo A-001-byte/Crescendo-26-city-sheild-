@@ -127,7 +127,7 @@ def _parse_nlp_inputs(nlp_signals):
         if nlp_signals.get("sentiment") is not None:
             sentiment = float(nlp_signals["sentiment"])
         elif nlp_signals.get("avg_severity") is not None:
-            # avg_severity is 0–1 (higher = more alarming); map to negative sentiment
+            # avg_severity is 0-1 (higher = more alarming); map to negative sentiment
             sentiment = -(float(nlp_signals["avg_severity"]))
     except (TypeError, ValueError):
         sentiment = None
@@ -137,7 +137,7 @@ def _parse_nlp_inputs(nlp_signals):
         if nlp_signals.get("keyword_score") is not None:
             keyword_score = float(nlp_signals["keyword_score"])
         elif nlp_signals.get("avg_severity") is not None:
-            # scale 0–1 severity to a keyword-equivalent score 0–10
+            # scale 0-1 severity to a keyword-equivalent score 0-10
             keyword_score = float(nlp_signals["avg_severity"]) * 10.0
     except (TypeError, ValueError):
         keyword_score = None

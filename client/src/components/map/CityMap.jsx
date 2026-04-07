@@ -112,13 +112,14 @@ export default function CityMap() {
   const [mapRect, setMapRect] = useState(null)
 
   const handleWardSelect = (ward, e) => {
-    // If e exists, it might have originalEvent for pointer x/y
-    const x = e?.originalEvent?.layerX || 100;
-    const y = e?.originalEvent?.layerY || 100;
-
-    const rect = e?.originalEvent?.target?.closest('.map-container')?.getBoundingClientRect() || { width: 1200, height: 600 };
-    setMapRect(rect);
-    setSelectedWard({ ward, position: { x, y } });
+    const clientX = e?.originalEvent?.clientX ?? 0
+    const clientY = e?.originalEvent?.clientY ?? 0
+    const rect = e?.originalEvent?.target?.closest('.map-container')?.getBoundingClientRect()
+      ?? { left: 0, top: 0, width: 1200, height: 600 }
+    const x = clientX - rect.left
+    const y = clientY - rect.top
+    setMapRect(rect)
+    setSelectedWard({ ward, position: { x, y } })
   }
 
   return (

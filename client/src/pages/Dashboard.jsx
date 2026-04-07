@@ -34,7 +34,10 @@ export default function Dashboard() {
           setCityRiskData(data?.data ?? data)
         }
       } catch {
-        if (mounted) setCityRiskError(true)
+        if (mounted) {
+          setCityRiskError(true)
+          setCityRiskData(null)
+        }
       } finally {
         if (mounted) setCityRiskLoading(false)
       }

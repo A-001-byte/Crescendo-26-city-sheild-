@@ -165,9 +165,8 @@ textarea {
   display: none !important;
 }
 
-/* Force Leaflet inside context */
-.leaflet-pane { z-index: 4 !important; }
-.leaflet-top, .leaflet-bottom { z-index: 5 !important; }
+/* Confine Leaflet stacking context without overriding internal pane hierarchy */
+.map-wrapper { isolation: isolate; }
 
 /* Suppress map when sidebar/modal open */
 .modal-open .map-container,

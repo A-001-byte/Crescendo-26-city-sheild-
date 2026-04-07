@@ -4,7 +4,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim()
 
 const api = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
-  timeout: 60000,
+  timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -38,10 +38,10 @@ export const fetchCrisisScore = async () => {
   if (d.scores && !d.services) {
     const s = d.scores
     d.services = {
-      fuel:      { score: s.fuel      ?? null, trend: [], delta: 0 },
-      power:     { score: s.power     ?? null, trend: [], delta: 0 },
-      food:      { score: s.food      ?? null, trend: [], delta: 0 },
-      logistics: { score: s.transport ?? s.logistics ?? null, trend: [], delta: 0 },
+      fuel:      { score: s.fuel      ?? null, trend: null, delta: 0 },
+      power:     { score: s.power     ?? null, trend: null, delta: 0 },
+      food:      { score: s.food      ?? null, trend: null, delta: 0 },
+      logistics: { score: s.transport ?? s.logistics ?? null, trend: null, delta: 0 },
     }
   }
 

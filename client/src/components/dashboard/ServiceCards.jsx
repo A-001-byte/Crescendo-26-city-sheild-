@@ -25,13 +25,15 @@ const SERVICES = [
   },
 ]
 
+import { getRiskBand } from '../../utils/riskCalculations'
+
 function ServiceCard({ service, data }) {
   const score = data?.score ?? service.defaultScore
   const thresholdPct = Math.max(0, Math.min(100, (score / 10) * 100))
-  const riskBand = score > 7 ? 'high' : score > 5 ? 'medium' : 'low'
-  const colorToken = riskBand === 'high' ? 'bg-error' : riskBand === 'medium' ? 'bg-tertiary-container' : 'bg-primary'
-  const textColor = riskBand === 'high' ? 'text-error' : riskBand === 'medium' ? 'text-tertiary-container' : 'text-primary'
-  const riskLabel = riskBand === 'high' ? 'HIGH' : riskBand === 'medium' ? 'MEDIUM' : 'LOW'
+  const riskBand = getRiskBand(score)
+  const colorToken = riskBand === 'critical' || riskBand === 'high' ? 'bg-error' : riskBand === 'medium' ? 'bg-tertiary-container' : 'bg-primary'
+  const textColor = riskBand === 'critical' || riskBand === 'high' ? 'text-error' : riskBand === 'medium' ? 'text-tertiary-container' : 'text-primary'
+  const riskLabel = riskBand === 'critical' ? 'CRITICAL' : riskBand === 'high' ? 'HIGH' : riskBand === 'medium' ? 'MEDIUM' : 'LOW'
 
   return (
     <div className="space-y-4 pt-4 border-b border-outline-variant/30 pb-6 w-full">

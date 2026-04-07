@@ -1,49 +1,62 @@
+import logging
 from transformers import pipeline
 
+logger = logging.getLogger(__name__)
+
 _classifier = None
+
+
+def normalize_label_confidence(label: str, score: float):
+    """
+    Shared utility: convert raw BERT label/score to (is_real, confidence).
+    confidence = probability the article is genuine news (0-1).
+    """
+    is_real = label == "LABEL_1"
+    confidence = score if is_real else 1 - score
+    return is_real, confidence
+
 
 def load_model():
     global _classifier
     if _classifier is None:
-        print("[CityShield] Loading fake news detection model...")
+        logger.info("[CityShield] Loading fake news detection model...")
         _classifier = pipeline(
             "text-classification",
             model="jy46604790/Fake-News-Bert-Detect",
             truncation=True,
             max_length=512
         )
-        print("[CityShield] Model loaded successfully.")
+        logger.info("[CityShield] Model loaded successfully.")
     return _classifier
 
+
 REAL_THRESHOLD = 0.65
+
 
 def filter_headlines(headlines: list[str]) -> list[str]:
     classifier = load_model()
     verified = []
     discarded = []
-    print("\n[CityShield] Running Fake News Filter...")
-    print(f"  Threshold: {REAL_THRESHOLD} (above = REAL, below = FAKE)\n")
+    logger.info("[CityShield] Running Fake News Filter... threshold=%.2f", REAL_THRESHOLD)
     for headline in headlines:
         result = classifier(headline)[0]
-        label = result["label"]
-        score = result["score"]
-        is_real = label == "LABEL_1"
-        confidence = score if is_real else 1 - score
-        status = "REAL" if confidence >= REAL_THRESHOLD else "FAKE"
-        print(f"  [{status}] ({confidence:.2f}) {headline[:60]}...")
+        is_real, confidence = normalize_label_confidence(result["label"], result["score"])
+        # status reflects the actual filter decision, not just the confidence threshold
+        status = "REAL" if (confidence >= REAL_THRESHOLD and is_real) else "FAKE"
+        logger.debug("  [%s] (%.2f) %s", status, confidence, headline[:60])
         if confidence >= REAL_THRESHOLD and is_real:
             verified.append(headline)
         else:
             discarded.append(headline)
-    print(f"\n  Verified Headlines : {len(verified)}")
-    print(f"  Discarded Headlines: {len(discarded)}")
+    logger.info("  Verified: %d  Discarded: %d", len(verified), len(discarded))
     if not verified:
-        print("  [WARNING] All headlines filtered -- using originals as fallback")
+        logger.warning("  [WARNING] All headlines filtered -- using originals as fallback")
         return headlines
     return verified
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format="%(message)s")
     test_headlines = [
         "India raises fuel prices amid global oil surge",
         "SHOCKING: Government secretly replacing water with poison",

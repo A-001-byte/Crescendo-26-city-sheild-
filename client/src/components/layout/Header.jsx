@@ -8,6 +8,7 @@ export default function Header({ onToggleSidebar }) {
       <div className="flex items-center gap-6">
         <button
           onClick={onToggleSidebar}
+          aria-label="Toggle sidebar"
           className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors"
         >
           <span className="material-symbols-outlined text-primary">menu</span>

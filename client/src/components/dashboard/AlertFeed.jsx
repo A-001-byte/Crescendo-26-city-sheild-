@@ -12,14 +12,8 @@ export default function AlertFeed() {
   const items = (alerts || []).slice(0, 12)
 
   return (
-    <div
-      className="flex flex-col h-full rounded-[3rem] overflow-hidden isolate"
-      style={{ background: '#FFFFFF', border: '1px solid #DBEAFE', boxShadow: '0 2px 16px rgba(59,130,246,0.07)' }}
-    >
-      <div
-        className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid #EFF6FF' }}
-      >
+    <div className="flex flex-col h-full rounded-[3rem] overflow-hidden isolate bg-white border border-blue-100 shadow-[0_2px_16px_rgba(59,130,246,0.07)]">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0 border-b border-blue-50">
         <h3 className="font-heading font-bold text-sm uppercase tracking-widest text-primary">Recent Alerts</h3>
         <span
           className="text-[10px] font-mono px-2 py-0.5 rounded-full"
