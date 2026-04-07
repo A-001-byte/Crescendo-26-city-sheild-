@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Search, CheckCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { useCrisis } from '../../context/CrisisContext'
 
 const HISTORY = [
   { id: 'h1', severity: 'high', ward: 'Katraj', service: 'fuel', message: 'test' },
@@ -16,40 +16,60 @@ const HISTORY = [
 ]
 
 const SEVERITY_CONFIG = {
-  high: { bg: '#EF4444', text: '#FFFFFF', label: 'HIGH RISK' },
-  moderate: { bg: '#EAB308', text: '#FFFFFF', label: 'MEDIUM RISK' },
-  low: { bg: '#22C55E', text: '#FFFFFF', label: 'LOW RISK' },
+  high: { bg: '#FEE2E2', text: '#B91C1C', border: '#FCA5A5', label: 'HIGH', score: 8 },
+  moderate: { bg: '#FEF3C7', text: '#B45309', border: '#FCD34D', label: 'MEDIUM', score: 5 },
+  low: { bg: '#DCFCE7', text: '#15803D', border: '#86EFAC', label: 'LOW', score: 2 },
 }
 
 function MinimalAlertCard({ a, index }) {
   const cfg = SEVERITY_CONFIG[a.severity] || SEVERITY_CONFIG.low
 
   return (
-    <motion.div
+    <div
       key={a.id}
-      initial={{ opacity: 0, scale: 0.95, y: 15 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.35, ease: 'easeOut' }}
-      whileHover={{ scale: 1.05 }}
-      className="mb-4 rounded-full flex items-center justify-center p-4 shadow-md cursor-default"
+      className="max-w-md mx-auto w-full flex items-center justify-between p-3 border"
       style={{
         backgroundColor: cfg.bg,
         color: cfg.text,
+        borderColor: cfg.border,
       }}
     >
-      <span className="font-bold tracking-widest text-base text-center">
-        {cfg.label} — {a.ward.toUpperCase()}
-      </span>
-    </motion.div>
+      <span className="font-bold text-sm tracking-wide">{a.ward.toUpperCase()}</span>
+      <span className="font-bold text-sm">{cfg.label}</span>
+      <span className="font-bold text-sm">{cfg.score}</span>
+    </div>
   )
 }
 
 export default function AlertHistory() {
+  const { alerts } = useCrisis()
   const [search, setSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('all')
   const [serviceFilter, setServiceFilter] = useState('all')
 
-  const filtered = HISTORY.filter(a => {
+  const items = useMemo(() => {
+    const source = alerts?.length ? alerts : HISTORY
+    return source.map((a, index) => {
+      const severity = String(a.severity || a.level || 'low').toLowerCase()
+      const severityMap = {
+        red: 'high',
+        orange: 'moderate',
+        yellow: 'moderate',
+        green: 'low',
+      }
+      const mappedSeverity = severityMap[severity] || severity
+      const normalizedSeverity = ['high', 'moderate', 'low'].includes(mappedSeverity) ? mappedSeverity : 'low'
+      return {
+        id: a.id || `h-${index}`,
+        severity: normalizedSeverity,
+        ward: a.ward || a.area || 'All Wards',
+        service: a.service || a.category || 'fuel',
+        message: a.message || '',
+      }
+    })
+  }, [alerts])
+
+  const filtered = items.filter(a => {
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false
     if (serviceFilter !== 'all' && a.service !== serviceFilter) return false
     if (search && !a.ward.toLowerCase().includes(search.toLowerCase())) return false
@@ -60,12 +80,12 @@ export default function AlertHistory() {
     <div className="flex flex-col h-full" style={{ background: 'transparent' }}>
       {/* Header & Filters */}
       <div
-        className="px-4 pt-4 pb-3 rounded-2xl mb-3 flex-shrink-0"
-        style={{ background: '#FFFFFF', border: '1px solid #DBEAFE', boxShadow: '0 2px 12px rgba(59,130,246,0.06)' }}
+        className="px-4 pt-4 pb-3 mb-3 flex-shrink-0 shadow-sm"
+        style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-heading font-bold text-base" style={{ color: '#0F172A' }}>Alert History</h3>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-full" style={{ background: '#EFF6FF', color: '#3B82F6' }}>
+          <h3 className="font-heading font-semibold text-base tracking-wide uppercase" style={{ color: '#0F172A' }}>Alert History</h3>
+          <span className="text-xs font-mono px-2 py-0.5" style={{ background: '#EFF6FF', color: '#3B82F6' }}>
             {filtered.length} records
           </span>
         </div>
@@ -76,7 +96,7 @@ export default function AlertHistory() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search area..."
-              className="w-full text-xs rounded-xl pl-8 pr-3 py-2 focus:outline-none transition-shadow"
+              className="w-full text-xs pl-8 pr-3 py-2 focus:outline-none"
               style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
               onFocus={e => e.target.style.borderColor = '#3B82F6'}
               onBlur={e => e.target.style.borderColor = '#E2E8F0'}
@@ -85,7 +105,7 @@ export default function AlertHistory() {
           <select
             value={severityFilter}
             onChange={e => setSeverityFilter(e.target.value)}
-            className="text-xs rounded-xl px-3 py-2 focus:outline-none"
+            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
           >
             <option value="all">All Severity</option>
@@ -96,7 +116,7 @@ export default function AlertHistory() {
           <select
             value={serviceFilter}
             onChange={e => setServiceFilter(e.target.value)}
-            className="text-xs rounded-xl px-3 py-2 focus:outline-none"
+            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
           >
             <option value="all">All Services</option>
@@ -110,9 +130,11 @@ export default function AlertHistory() {
 
       {/* Notification Cards */}
       <div className="flex-1 overflow-y-auto px-2">
-        {filtered.map((a, i) => (
-          <MinimalAlertCard key={a.id} a={a} index={i} />
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtered.map((a, i) => (
+            <MinimalAlertCard key={a.id} a={a} index={i} />
+          ))}
+        </div>
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16" style={{ color: '#94A3B8' }}>
             <CheckCircle className="w-10 h-10 mb-3 opacity-40" />

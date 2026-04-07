@@ -14,10 +14,10 @@
   --text-secondary: #334155;
   --text-muted: #64748B;
 
-  --risk-low: #10B981;
-  --risk-moderate: #F59E0B;
-  --risk-high: #EF4444;
-  --risk-critical: #7F1D1D;
+  --risk-low: #16A34A;
+  --risk-moderate: #EAB308;
+  --risk-high: #DC2626;
+  --risk-critical: #DC2626;
   --risk-glow-low: rgba(16,185,129,0.15);
   --risk-glow-high: rgba(239,68,68,0.15);
 
@@ -44,6 +44,19 @@ body {
   overflow: hidden;
 }
 
+.font-heading,
+.font-body,
+input,
+select,
+button,
+textarea {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -65,14 +78,8 @@ body {
 
 
 
-/* Pulse glow for critical risk */
-@keyframes riskPulse {
-  0%, 100% { box-shadow: 0 0 8px var(--risk-high); }
-  50% { box-shadow: 0 0 20px var(--risk-high), 0 0 40px var(--risk-high); }
-}
-
 .risk-pulse {
-  animation: riskPulse 2s ease-in-out infinite;
+  animation: none;
 }
 
 /* Ticker animation */
@@ -90,7 +97,7 @@ body {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
   color: #0F172A !important;
-  border-radius: 8px !important;
+  border-radius: 0 !important;
   padding: 4px 8px !important;
   font-size: 12px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
@@ -109,7 +116,7 @@ body {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
   color: #0F172A !important;
-  border-radius: 12px !important;
+  border-radius: 0 !important;
 }
 
 .leaflet-popup-tip {
