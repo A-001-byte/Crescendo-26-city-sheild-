@@ -41,6 +41,9 @@ class Config:
     # Scheduler
     REFRESH_INTERVAL_MINUTES = int(os.getenv("REFRESH_INTERVAL_MINUTES", "15"))
 
+    # Model warm-up — set PREWARM_BERT=false to skip (e.g. in test environments)
+    PREWARM_BERT = os.getenv("PREWARM_BERT", "true").lower() in ("true", "1", "yes")
+
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 

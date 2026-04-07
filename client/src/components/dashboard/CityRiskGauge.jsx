@@ -27,7 +27,7 @@ export default function CityRiskGauge({ score = 6.4 }) {
   }, [score])
 
   // Map 1-10 to angle mapping inside the simplistic half-circle SVG bounding box we adopted
-  // viewBox: 0 0 100 50
+  // viewBox: 0 0 100 55  (extra 5px height for stroke overflow below the arc baseline)
   // Arc starts at 10 50 (left) and ends at 90 50 (right)
   // R = 40, Center = 50, 50
   const normalizedValue = Math.max(0, Math.min(1, (animatedScore - 1) / 9)) // 0 to 1

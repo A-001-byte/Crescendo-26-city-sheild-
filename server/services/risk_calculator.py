@@ -133,12 +133,11 @@ def _parse_nlp_inputs(nlp_signals):
         sentiment = None
 
     # --- keyword_score ---
+    # Only read from explicit keyword_score field; do NOT derive from avg_severity
+    # (avg_severity is already consumed by sentiment above — double-counting inflates risk).
     try:
         if nlp_signals.get("keyword_score") is not None:
             keyword_score = float(nlp_signals["keyword_score"])
-        elif nlp_signals.get("avg_severity") is not None:
-            # scale 0-1 severity to a keyword-equivalent score 0-10
-            keyword_score = float(nlp_signals["avg_severity"]) * 10.0
     except (TypeError, ValueError):
         keyword_score = None
 

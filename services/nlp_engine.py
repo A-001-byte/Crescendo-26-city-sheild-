@@ -5,7 +5,8 @@
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from news_fetcher import get_news_headlines
-from fake_news_filter import filter_headlines
+# fake_news_filter loads BERT — imported lazily inside get_nlp_signals() to avoid
+# triggering model download/load at module import time.
 from gdelt_fetcher import get_gdelt_score
 from yahoo_fetcher import get_market_score
 from govdata_fetcher import get_supply_score
@@ -138,6 +139,7 @@ def get_nlp_signals() -> dict:
         }
     """
     try:
+        from fake_news_filter import filter_headlines  # lazy — avoids BERT load at module import time
         headlines     = _run_stage("news_fetch",    get_news_headlines,  [])
         headlines     = _run_stage("fake_news_filter", filter_headlines, headlines, headlines)
         sentiment     = _run_stage("sentiment",     get_sentiment,       0.0,  headlines)

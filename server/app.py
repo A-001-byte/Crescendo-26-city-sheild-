@@ -243,7 +243,9 @@ def _prewarm_bert():
 # Entry point
 # ---------------------------------------------------------------------------
 app = create_app()
-_prewarm_bert()
+from config import config as _config
+if _config.PREWARM_BERT:
+    _prewarm_bert()
 
 if __name__ == "__main__":
     from config import config

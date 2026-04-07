@@ -94,7 +94,7 @@ export const fetchLatestEvents = async (limit = 20) => {
     ...e,
     id: e.id ?? e.url ?? `event-${i}`,
     severity: e.crisis_level ?? (e.combined_severity > 0.6 ? 'high' : e.combined_severity > 0.3 ? 'moderate' : 'low'),
-    published_at: e.published_at ?? new Date().toISOString(),
+    published_at: e.published_at ?? null,
   }))
 }
 

@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             <span className="material-symbols-outlined text-[10px]" style={{ color: p.color }}>circle</span>
             <span className="text-xs font-bold uppercase tracking-widest text-primary">{p.name}</span>
           </div>
-          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value.toFixed(1)}</span>
+          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value != null ? p.value.toFixed(1) : '—'}</span>
         </div>
       ))}
     </div>

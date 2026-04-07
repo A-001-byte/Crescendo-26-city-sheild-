@@ -43,16 +43,26 @@ def _fetch_from_yfinance() -> Dict[str, Any]:
     if wti_hist.empty or len(wti_hist) < 2:
         raise ValueError("yfinance returned no data for CL=F")
 
-    wti_current = float(wti_hist["Close"].iloc[-1])
-    wti_prev = float(wti_hist["Close"].iloc[-2])
-    trend_7d = [round(float(v), 2) for v in wti_hist["Close"].tail(7).tolist()]
+    import math
+    wti_close = wti_hist["Close"].dropna()
+    wti_close = wti_close[wti_close.apply(lambda x: math.isfinite(float(x)))]
+    if len(wti_close) < 2:
+        raise ValueError("Insufficient finite WTI close prices after NaN/inf cleaning")
+
+    wti_current = float(wti_close.iloc[-1])
+    wti_prev = float(wti_close.iloc[-2])
+    trend_7d = [round(float(v), 2) for v in wti_close.tail(7).tolist()]
 
     # Try real Brent price (BZ=F); synthesise from WTI only if unavailable
     try:
         brent_hist = yf.Ticker("BZ=F").history(period="8d")
         if not brent_hist.empty and len(brent_hist) >= 2:
-            brent_current = round(float(brent_hist["Close"].iloc[-1]), 2)
-            brent_prev = round(float(brent_hist["Close"].iloc[-2]), 2)
+            brent_close = brent_hist["Close"].dropna()
+            brent_close = brent_close[brent_close.apply(lambda x: math.isfinite(float(x)))]
+            if len(brent_close) < 2:
+                raise ValueError("BZ=F insufficient data after cleaning")
+            brent_current = round(float(brent_close.iloc[-1]), 2)
+            brent_prev = round(float(brent_close.iloc[-2]), 2)
         else:
             raise ValueError("BZ=F empty")
     except Exception:
