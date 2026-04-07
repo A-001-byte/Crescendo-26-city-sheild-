@@ -2,6 +2,9 @@ import logging
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify
 from services.risk_calculator import calculate_risk
+from services.news_fetcher import fetch_crisis_news
+from services.nlp_engine import analyze_batch
+from services.oil_tracker import get_oil_prices
 from utils.cache import get_cached_risk
 from utils.constants import WARD_LIST
 import random
@@ -11,10 +14,18 @@ logger = logging.getLogger(__name__)
 risk_bp = Blueprint("risk", __name__)
 
 
+def _calculate_live_risk_payload():
+    """Build risk output from live upstream sources (no implicit mock fallback)."""
+    articles = fetch_crisis_news()
+    nlp_result = analyze_batch(articles)
+    oil_data = get_oil_prices()
+    return calculate_risk(nlp_signals=nlp_result, oil_data=oil_data, use_mock_data=False)
+
+
 @risk_bp.route("/api/risk/city-score", methods=["GET"])
 def get_city_score():
     try:
-        result = get_cached_risk(calculate_risk)
+        result = get_cached_risk(_calculate_live_risk_payload)
         logger.info("API HIT: /api/risk/city-score")
 
         result["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -27,7 +38,7 @@ def get_city_score():
 @risk_bp.route("/api/risk/ward-scores", methods=["GET"])
 def get_ward_scores():
     try:
-        result = get_cached_risk(calculate_risk)
+        result = get_cached_risk(_calculate_live_risk_payload)
         logger.info("API HIT: /api/risk/ward-scores")
         base = result["scores"]
 
