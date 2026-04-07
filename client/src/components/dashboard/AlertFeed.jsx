@@ -1,24 +1,21 @@
 import { useCrisis } from '../../context/CrisisContext'
-import { formatRelativeTime } from '../../utils/formatters'
-import { getSeverityColor } from '../../utils/formatters'
-import StatusBadge from '../common/StatusBadge'
+import { motion } from 'framer-motion'
 
 const HARDCODED_ALERTS = [
-  { id: 1, severity: 'high', message: 'Fuel buffer critically low in Katraj ward — 22h remaining', ward: 'Katraj', service: 'fuel', created_at: new Date(Date.now() - 8 * 60000).toISOString() },
-  { id: 2, severity: 'high', message: 'Transport strike disrupting fuel delivery — Hadapsar affected', ward: 'Hadapsar', service: 'logistics', created_at: new Date(Date.now() - 25 * 60000).toISOString() },
-  { id: 3, severity: 'moderate', message: 'Swargate distribution center at 60% capacity', ward: 'Swargate', service: 'food', created_at: new Date(Date.now() - 55 * 60000).toISOString() },
-  { id: 4, severity: 'moderate', message: 'Pimpri grid load at 94% — advisory issued', ward: 'Pimpri', service: 'power', created_at: new Date(Date.now() - 2 * 3600000).toISOString() },
-  { id: 5, severity: 'low', message: 'IOC Pune terminal delivery scheduled — buffer to be replenished', ward: 'Kothrud', service: 'fuel', created_at: new Date(Date.now() - 4 * 3600000).toISOString() },
-  { id: 6, severity: 'high', message: 'Brent crude +3.2% — OMC advance payments activated', ward: 'All Wards', service: 'fuel', created_at: new Date(Date.now() - 5 * 3600000).toISOString() },
-  { id: 7, severity: 'moderate', message: 'Food grain PDS distribution delayed — rain disruption', ward: 'Chinchwad', service: 'food', created_at: new Date(Date.now() - 7 * 3600000).toISOString() },
-  { id: 8, severity: 'low', message: 'Solar generation record: grid pressure eased in Aundh', ward: 'Aundh', service: 'power', created_at: new Date(Date.now() - 10 * 3600000).toISOString() },
+  { id: 1, severity: 'high', ward: 'Katraj' },
+  { id: 2, severity: 'high', ward: 'Hadapsar' },
+  { id: 3, severity: 'moderate', ward: 'Swargate' },
+  { id: 4, severity: 'moderate', ward: 'Pimpri' },
+  { id: 5, severity: 'low', ward: 'Kothrud' },
+  { id: 6, severity: 'high', ward: 'All Wards' },
+  { id: 7, severity: 'moderate', ward: 'Chinchwad' },
+  { id: 8, severity: 'low', ward: 'Aundh' },
 ]
 
-const SERVICE_COLORS = {
-  fuel: '#F97316',
-  power: '#FACC15',
-  food: '#22C55E',
-  logistics: '#6366F1',
+const SEVERITY_CONFIG = {
+  high: { bg: '#EF4444', text: '#FFFFFF', label: 'HIGH RISK' },
+  moderate: { bg: '#EAB308', text: '#FFFFFF', label: 'MEDIUM RISK' },
+  low: { bg: '#22C55E', text: '#FFFFFF', label: 'LOW RISK' },
 }
 
 export default function AlertFeed() {
@@ -26,46 +23,41 @@ export default function AlertFeed() {
   const items = (alerts?.length ? alerts : HARDCODED_ALERTS).slice(0, 12)
 
   return (
-    <div className="bg-bg-card border border-border-default rounded-xl shadow-lg flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0">
-        <h3 className="font-heading font-semibold text-text-primary text-sm">Recent Alerts</h3>
-        <span className="text-xs font-mono text-text-muted">{items.length} active</span>
+    <div
+      className="flex flex-col h-full rounded-2xl overflow-hidden"
+      style={{ background: '#FFFFFF', border: '1px solid #DBEAFE', boxShadow: '0 2px 16px rgba(59,130,246,0.07)' }}
+    >
+      <div
+        className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0"
+        style={{ borderBottom: '1px solid #EFF6FF' }}
+      >
+        <h3 className="font-heading font-bold text-sm" style={{ color: '#0F172A' }}>Recent Alerts</h3>
+        <span
+          className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+          style={{ background: '#EFF6FF', color: '#3B82F6' }}
+        >
+          {items.length} active
+        </span>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 pb-2">
-        {items.map((alert) => {
-          const color = getSeverityColor(alert.severity)
-          const svcColor = SERVICE_COLORS[alert.service] || '#94A3B8'
+
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2 space-y-3">
+        {items.map((alert, idx) => {
+          const cfg = SEVERITY_CONFIG[alert.severity] || SEVERITY_CONFIG.low
+
           return (
-            <div
+            <motion.div
               key={alert.id}
-              className="flex gap-3 px-2 py-2.5 rounded-lg hover:bg-bg-elevated/50 transition-colors mb-0.5"
-              style={{ borderLeft: `3px solid ${color}` }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: idx * 0.05, duration: 0.3 }}
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center justify-center p-3 rounded-full shadow-sm cursor-default"
+              style={{ backgroundColor: cfg.bg, color: cfg.text }}
             >
-              <div className="flex flex-col items-start gap-1 flex-1 min-w-0">
-                <div className="flex items-center gap-2 w-full">
-                  <StatusBadge severity={alert.severity} />
-                  <span className="text-[10px] font-mono text-text-muted ml-auto flex-shrink-0">
-                    {formatRelativeTime(alert.created_at)}
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary leading-snug line-clamp-2">
-                  {alert.message}
-                </p>
-                <div className="flex items-center gap-2">
-                  {alert.ward && (
-                    <span className="text-[10px] text-text-muted">{alert.ward}</span>
-                  )}
-                  {alert.service && (
-                    <span
-                      className="text-[10px] px-1.5 py-0.5 rounded font-mono"
-                      style={{ backgroundColor: `${svcColor}20`, color: svcColor }}
-                    >
-                      {alert.service}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+              <span className="font-bold tracking-widest text-sm text-center">
+                {cfg.label} — {alert.ward.toUpperCase()}
+              </span>
+            </motion.div>
           )
         })}
       </div>

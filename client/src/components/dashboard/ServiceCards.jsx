@@ -1,6 +1,7 @@
 import { Flame, Zap, Wheat, Truck, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
-import { getRiskColor } from '../../utils/riskCalculations'
+import { getRiskColor, getRiskLabel } from '../../utils/riskCalculations'
+import { motion } from 'framer-motion'
 
 const SERVICES = [
   {
@@ -41,36 +42,51 @@ const SERVICES = [
   },
 ]
 
+// Risk-level glow color
+function getRiskGlow(score) {
+  if (score >= 9) return 'rgba(127,29,29,0.18)'
+  if (score >= 7) return 'rgba(239,68,68,0.16)'
+  if (score >= 4) return 'rgba(245,158,11,0.14)'
+  return 'rgba(16,185,129,0.14)'
+}
+
 function ServiceCard({ service, data }) {
   const Icon = service.icon
   const score = data?.score ?? service.defaultScore
   const delta = typeof data?.delta === 'number' ? data.delta : service.defaultDelta
   const trendArr = Array.isArray(data?.trend) ? data.trend : service.defaultTrend
   const trend = trendArr.map((v) => ({ v }))
-  const color = getRiskColor(score)
+  const riskColor = getRiskColor(score)
+  const glowColor = getRiskGlow(score)
 
   const DeltaIcon = delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus
   const deltaColor = delta > 0.05 ? '#EF4444' : delta < -0.05 ? '#10B981' : '#94A3B8'
 
   return (
-    <div
-      className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg transition-transform duration-200 hover:scale-[1.02] cursor-default"
+    <motion.div
+      className="rounded-2xl p-4 flex flex-col justify-between cursor-default"
       style={{
+        background: '#FFFFFF',
+        border: `1px solid #E2E8F0`,
         borderLeft: `4px solid ${service.color}`,
-        boxShadow: `0 0 0 0 ${service.color}`,
+        boxShadow: `0 2px 12px rgba(0,0,0,0.05)`,
+        transition: 'all 0.25s ease',
       }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = `0 0 20px ${service.color}20`}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.3)'}
+      whileHover={{
+        scale: 1.025,
+        boxShadow: `0 8px 30px ${glowColor}, 0 2px 8px rgba(0,0,0,0.08)`,
+        borderColor: service.color,
+      }}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${service.color}20` }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: `${service.color}18` }}
           >
             <Icon className="w-4 h-4" style={{ color: service.color }} />
           </div>
-          <span className="text-sm font-body font-medium text-text-secondary">{service.label}</span>
+          <span className="text-sm font-body font-semibold" style={{ color: '#334155' }}>{service.label}</span>
         </div>
         <div className="flex items-center gap-1" style={{ color: deltaColor }}>
           <DeltaIcon className="w-3.5 h-3.5" />
@@ -81,18 +97,23 @@ function ServiceCard({ service, data }) {
       </div>
 
       <div className="flex items-end justify-between">
-        <span
-          className="text-3xl font-mono font-bold"
-          style={{ color }}
-        >
-          {score.toFixed(1)}
-        </span>
-        <div style={{ width: 100, height: 36 }}>
+        <div>
+          <span
+            className="text-3xl font-mono font-bold"
+            style={{ color: riskColor }}
+          >
+            {score.toFixed(1)}
+          </span>
+          <div className="text-[10px] mt-0.5 font-medium" style={{ color: riskColor }}>
+            {getRiskLabel(score)}
+          </div>
+        </div>
+        <div style={{ width: 100, height: 40 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trend} margin={{ top: 2, bottom: 2, left: 0, right: 0 }}>
               <defs>
                 <linearGradient id={`grad-${service.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={service.color} stopOpacity={0.4} />
+                  <stop offset="5%" stopColor={service.color} stopOpacity={0.35} />
                   <stop offset="95%" stopColor={service.color} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -100,7 +121,7 @@ function ServiceCard({ service, data }) {
                 type="monotone"
                 dataKey="v"
                 stroke={service.color}
-                strokeWidth={1.5}
+                strokeWidth={2}
                 fill={`url(#grad-${service.key})`}
                 dot={false}
                 isAnimationActive={false}
@@ -110,12 +131,12 @@ function ServiceCard({ service, data }) {
         </div>
       </div>
 
-      <div className="mt-1.5">
-        <span className="text-xs text-text-muted font-mono">
+      <div className="mt-2 pt-2" style={{ borderTop: '1px solid #F1F5F9' }}>
+        <span className="text-[10px] font-mono" style={{ color: '#94A3B8' }}>
           {delta > 0.05 ? '▲' : delta < -0.05 ? '▼' : '—'} {Math.abs(delta).toFixed(1)} from 6h ago
         </span>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

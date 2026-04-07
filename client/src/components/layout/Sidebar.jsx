@@ -1,8 +1,9 @@
-import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { LayoutDashboard, Map, Bell, BarChart2, Settings, Shield, ChevronLeft, ChevronRight } from 'lucide-react'
-import Tooltip from '../common/Tooltip'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  LayoutDashboard, Map, Bell, BarChart2, Settings,
+  Shield, X
+} from 'lucide-react'
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -12,98 +13,109 @@ const NAV = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="h-full flex flex-col bg-bg-secondary border-r border-border-default flex-shrink-0 overflow-hidden"
-      style={{ minWidth: collapsed ? 72 : 260 }}
-    >
-      {/* Logo */}
-      <div className="h-16 flex items-center px-5 border-b border-border-default flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-accent-blue/20 flex items-center justify-center flex-shrink-0">
-            <Shield className="w-5 h-5 text-accent-blue" />
-          </div>
-          <motion.span
-            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : 'auto' }}
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="font-heading font-bold text-text-primary text-lg overflow-hidden whitespace-nowrap"
-          >
-            CityShield
-          </motion.span>
-        </div>
-      </div>
+            onClick={onClose}
+            className="fixed inset-0 z-[9998] pointer-events-auto"
+            style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(15,23,42,0.25)' }}
+          />
 
-      {/* Nav */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="space-y-1 px-2">
-          {NAV.map(({ to, icon: Icon, label, exact }) => {
-            const isActive = exact ? location.pathname === to : location.pathname.startsWith(to)
-            return (
-              <Tooltip key={to} content={collapsed ? label : null}>
-                <NavLink
-                  to={to}
-                  className={() =>
-                    `relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group w-full ${
-                      isActive
-                        ? 'bg-bg-elevated text-text-primary'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated/50'
-                    }`
-                  }
-                >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-accent-blue rounded-r-full" />
-                  )}
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-accent-blue' : ''}`} />
-                  <motion.span
-                    animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : 'auto' }}
-                    transition={{ duration: 0.2 }}
-                    className="text-sm font-body font-medium overflow-hidden whitespace-nowrap"
-                  >
-                    {label}
-                  </motion.span>
-                </NavLink>
-              </Tooltip>
-            )
-          })}
-        </div>
-      </nav>
-
-      {/* Status */}
-      <div className="border-t border-border-default px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-risk-low flex-shrink-0 animate-pulse" />
-          <motion.span
-            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : 'auto' }}
-            transition={{ duration: 0.2 }}
-            className="text-xs text-text-muted overflow-hidden whitespace-nowrap"
+          {/* Sidebar Panel */}
+          <motion.aside
+            key="sidebar"
+            initial={{ x: -280, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -280, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed top-0 left-0 h-full w-64 z-[9999] pointer-events-auto flex flex-col shadow-2xl"
+            style={{
+              background: 'linear-gradient(160deg, #FFFFFF 0%, #EDF4FF 100%)',
+              borderRight: '1px solid #DBEAFE',
+            }}
           >
-            All Systems Operational
-          </motion.span>
-        </div>
-      </div>
+            {/* Logo */}
+            <div className="h-16 flex items-center justify-between px-5 border-b border-blue-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #3B82F6, #06B6D4)' }}>
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-heading font-bold text-text-primary text-lg tracking-tight">
+                  CityShield
+                </span>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-blue-50 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-      {/* Toggle */}
-      <div className="px-4 pb-4">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-border-default text-text-muted hover:text-text-primary hover:border-border-active transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          <motion.span
-            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : 'auto' }}
-            transition={{ duration: 0.2 }}
-            className="text-xs overflow-hidden whitespace-nowrap"
-          >
-            Collapse
-          </motion.span>
-        </button>
-      </div>
-    </motion.aside>
+            {/* Nav */}
+            <nav className="flex-1 py-4 overflow-y-auto">
+              <div className="px-3 mb-2">
+                <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest px-2">Navigation</span>
+              </div>
+              <div className="space-y-1 px-2">
+                {NAV.map(({ to, icon: Icon, label, exact }) => {
+                  const isActive = exact
+                    ? location.pathname === to
+                    : location.pathname.startsWith(to)
+                  return (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={onClose}
+                      className={() =>
+                        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                          isActive
+                            ? 'bg-accent-blue text-white shadow-md shadow-blue-200'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-blue-50'
+                        }`
+                      }
+                    >
+                      <Icon className={`w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-accent-blue'}`} />
+                      <span className="text-sm font-body font-medium">{label}</span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeNav"
+                          className="absolute inset-0 rounded-xl"
+                          style={{ zIndex: -1, background: 'linear-gradient(135deg, #3B82F6, #06B6D4)' }}
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                        />
+                      )}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </nav>
+
+            {/* Status Footer */}
+            <div className="px-4 py-4 border-t border-blue-100">
+              <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2">
+                <div className="w-2 h-2 rounded-full bg-risk-low flex-shrink-0 animate-pulse" />
+                <span className="text-xs text-text-secondary">All Systems Operational</span>
+              </div>
+              <div className="mt-3 text-center">
+                <span className="text-[10px] text-text-muted font-mono">CityShield v1.0 · Pune ICCC</span>
+              </div>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   )
 }

@@ -100,7 +100,7 @@ export default function CityRiskGauge({ score = 6.4 }) {
           <path
             d={bgPath}
             fill="none"
-            stroke="#2A3142"
+            stroke="#E2E8F0"
             strokeWidth={STROKE_WIDTH}
             strokeLinecap="round"
           />

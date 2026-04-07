@@ -39,7 +39,7 @@ export default {
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'monospace'],
-        body: ['"Plus Jakarta Sans"', 'sans-serif'],
+        body: ['"Times New Roman"', 'Times', 'serif'],
         heading: ['"Outfit"', 'sans-serif'],
       },
     },

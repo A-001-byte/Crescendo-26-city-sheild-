@@ -3,21 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0A0E17;
-  --bg-secondary: #111827;
-  --bg-card: #1A1F2E;
-  --bg-elevated: #232939;
-  --border-default: #2A3142;
+  --bg-primary: #F4F9FF;
+  --bg-secondary: #E6F2FF;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F8FAFC;
+  --border-default: #E2E8F0;
   --border-active: #3B82F6;
 
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
   --text-muted: #64748B;
 
   --risk-low: #10B981;
   --risk-moderate: #F59E0B;
   --risk-high: #EF4444;
-  --risk-critical: #DC2626;
+  --risk-critical: #7F1D1D;
   --risk-glow-low: rgba(16,185,129,0.15);
   --risk-glow-high: rgba(239,68,68,0.15);
 
@@ -62,13 +62,8 @@ body {
   background: rgba(59, 130, 246, 0.3);
 }
 
-/* Graph paper overlay for bg-primary */
-.graph-paper-bg {
-  background-image:
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
+
+
 
 /* Pulse glow for critical risk */
 @keyframes riskPulse {
@@ -90,37 +85,37 @@ body {
   animation: ticker 30s linear infinite;
 }
 
-/* Leaflet tooltip dark */
+/* Leaflet tooltip dark -> light */
 .leaflet-tooltip-dark {
-  background: #1A1F2E !important;
-  border: 1px solid #2A3142 !important;
-  color: #F1F5F9 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #0F172A !important;
   border-radius: 8px !important;
   padding: 4px 8px !important;
   font-size: 12px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
 }
 
 .leaflet-tooltip-dark::before {
-  border-top-color: #2A3142 !important;
+  border-top-color: #FFFFFF !important;
 }
 
-/* Leaflet dark containers */
+/* Leaflet containers */
 .leaflet-container {
-  background: #0A0E17 !important;
+  background: #F4F9FF !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #1A1F2E !important;
-  border: 1px solid #2A3142 !important;
-  color: #F1F5F9 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #0F172A !important;
   border-radius: 12px !important;
 }
 
 .leaflet-popup-tip {
-  background: #1A1F2E !important;
+  background: #FFFFFF !important;
 }
 
 .leaflet-popup-close-button {
-  color: #94A3B8 !important;
+  color: #64748B !important;
 }
