@@ -121,42 +121,53 @@ def get_nlp_signals() -> dict:
         }
     """
     try:
-        headlines = get_news_headlines()
-    except Exception:
-        headlines = []
+        try:
+            headlines = get_news_headlines()
+        except Exception:
+            headlines = []
 
-    try:
-        sentiment = get_sentiment(headlines)
-    except Exception:
-        sentiment = 0.0
+        try:
+            sentiment = get_sentiment(headlines)
+        except Exception:
+            sentiment = 0.0
 
-    try:
-        keyword_score = get_keyword_score(headlines)
-    except Exception:
-        keyword_score = 0.0
+        try:
+            keyword_score = get_keyword_score(headlines)
+        except Exception:
+            keyword_score = 0.0
 
-    try:
-        gdelt_score = get_gdelt_score()
-    except Exception:
-        gdelt_score = 5.0
+        try:
+            gdelt_score = get_gdelt_score()
+        except Exception:
+            gdelt_score = 5.0
 
-    try:
-        market_score = get_market_score()
-    except Exception:
-        market_score = 4.0
+        try:
+            market_score = get_market_score()
+        except Exception:
+            market_score = 4.0
 
-    try:
-        supply_score = get_supply_score()
-    except Exception:
-        supply_score = 3.0
+        try:
+            supply_score = get_supply_score()
+        except Exception:
+            supply_score = 3.0
 
-    return {
-        "sentiment":     sentiment,
-        "keyword_score": keyword_score,
-        "gdelt_score":   gdelt_score,
-        "market_score":  market_score,
-        "supply_score":  supply_score,
-    }
+        return {
+            "sentiment":     sentiment,
+            "keyword_score": keyword_score,
+            "gdelt_score":   gdelt_score,
+            "market_score":  market_score,
+            "supply_score":  supply_score,
+        }
+
+    except Exception as e:
+        print(f"[CityShield] NLP pipeline failed: {e} — using fallback")
+        return {
+            "sentiment":     -0.3,
+            "keyword_score": 5.0,
+            "gdelt_score":   5.0,
+            "market_score":  4.0,
+            "supply_score":  3.0,
+        }
 
 
 # ---------------------------------------------------------------------------
