@@ -4,7 +4,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim()
 
 const api = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
-  timeout: 10000,
+  timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -24,15 +24,6 @@ export const fetchCrisisScore = async () => {
   const d = unwrap(res)
   if (!d) return null
 
-  if (d.scores && !d.services) {
-    d.services = {
-      fuel: { score: d.scores.fuel },
-      food: { score: d.scores.food },
-      logistics: { score: d.scores.transport },
-      power: { score: d.scores.power },
-    }
-  }
-
   // Normalize: backend uses overall_crs → score
   if (d.overall_crs != null && d.score == null) d.score = d.overall_crs
   if (d.score == null && d.scores) {
@@ -41,11 +32,24 @@ export const fetchCrisisScore = async () => {
     )
     if (vals.length) d.score = vals.reduce((sum, v) => sum + Number(v), 0) / vals.length
   }
+
+  // Normalize: backend returns scores{fuel,food,transport,power}
+  // → frontend expects services{fuel,power,food,logistics} each with {score, trend, delta}
+  if (d.scores && !d.services) {
+    const s = d.scores
+    d.services = {
+      fuel:      { score: s.fuel      ?? null, trend: null, delta: 0 },
+      power:     { score: s.power     ?? null, trend: null, delta: 0 },
+      food:      { score: s.food      ?? null, trend: null, delta: 0 },
+      logistics: { score: s.transport ?? s.logistics ?? null, trend: null, delta: 0 },
+    }
+  }
+
   // Normalize: backend uses ward_scores (object) → wards (array)
   if (d.ward_scores && !d.wards) {
     d.wards = Object.entries(d.ward_scores).map(([name, score]) => ({ name, score }))
   }
-  console.log(d)
+
   return d
 }
 
@@ -83,11 +87,14 @@ export const fetchWardScore = async (wardName) => {
 export const fetchLatestEvents = async (limit = 20) => {
   const res = await api.get(`/events/latest?limit=${limit}`)
   const d = unwrap(res)
-  const articles = Array.isArray(d?.articles) ? d.articles : []
-  return articles.map((a, idx) => ({
-    ...a,
-    id: a.id || `${a.source || 'src'}-${idx}-${a.published_at || Date.now()}`,
-    severity: a.severity || a.crisis_level || 'moderate',
+  // Backend returns { articles: [...], total_articles, avg_severity, ... }
+  // NLPInsights expects a plain array of event objects
+  const articles = Array.isArray(d) ? d : (d?.articles ?? d?.all_analyses ?? [])
+  return articles.map((e, i) => ({
+    ...e,
+    id: e.id ?? e.url ?? `event-${i}`,
+    severity: e.crisis_level ?? (e.combined_severity > 0.6 ? 'high' : e.combined_severity > 0.3 ? 'moderate' : 'low'),
+    published_at: e.published_at ?? null,
   }))
 }
 
@@ -99,11 +106,13 @@ export const fetchOilData = async () => {
 export const fetchSignals = async () => {
   const res = await api.get('/events/signals')
   const d = unwrap(res)
+  // Backend returns { service_signals: { fuel: { score, article_count, top_keywords }, ... }, avg_severity, ... }
+  // NLPInsights expects flat { fuel: 0.73, power: 0.45, food: 0.52, logistics: 0.38 }
   const serviceSignals = d?.service_signals || {}
   return {
-    fuel: Number(serviceSignals?.fuel?.score || 0),
-    power: Number(serviceSignals?.power?.score || 0),
-    food: Number(serviceSignals?.food?.score || 0),
+    fuel:      Number(serviceSignals?.fuel?.score      || 0),
+    power:     Number(serviceSignals?.power?.score     || 0),
+    food:      Number(serviceSignals?.food?.score      || 0),
     logistics: Number(serviceSignals?.logistics?.score || 0),
   }
 }

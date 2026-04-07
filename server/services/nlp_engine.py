@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import logging
 from typing import Dict, List, Any
 from datetime import datetime
@@ -7,6 +8,52 @@ from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Fake news filter (BERT-based) — loaded lazily
+# ---------------------------------------------------------------------------
+_root_services = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "services"))
+if _root_services not in sys.path:
+    sys.path.append(_root_services)  # append so server/services/ keeps priority
+
+def _annotate_and_filter_articles(articles: List[Dict]) -> List[Dict]:
+    """
+    Run BERT fake news classifier on each article title.
+    Adds bert_confidence (0-1) and bert_label ('REAL'/'FAKE') to each article.
+    Filters out fakes, but keeps all articles (with scores) if all would be removed.
+    Falls back to original articles if model cannot be loaded.
+    """
+    try:
+        from fake_news_filter import load_model, REAL_THRESHOLD
+        classifier = load_model()  # fail hard here — if model can't load, skip BERT entirely
+    except Exception as exc:
+        logger.warning("Fake news model unavailable: %s — skipping BERT filter", exc)
+        return articles
+
+    annotated = []
+    for article in articles:
+        title = article.get("title", "")
+        if not title:
+            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": True})
+            continue
+        try:
+            result = classifier(title)[0]
+            from fake_news_filter import normalize_label_confidence
+            is_real, confidence = normalize_label_confidence(result["label"], result["score"])
+            confidence = round(confidence, 4)
+            bert_label = "REAL" if is_real else "FAKE"
+            bert_verified = is_real and confidence >= REAL_THRESHOLD
+            annotated.append({**article, "bert_confidence": confidence, "bert_label": bert_label, "bert_verified": bert_verified})
+        except Exception as exc:
+            logger.warning("BERT failed on article '%s': %s — skipping", title[:50], exc)
+            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": False})
+
+    filtered = [a for a in annotated if a.get("bert_verified", True)]
+    if not filtered:
+        logger.warning("BERT filtered all articles — keeping all with scores")
+        return annotated
+    logger.info("BERT filter: %d/%d articles verified as real", len(filtered), len(annotated))
+    return filtered
 
 # ---------------------------------------------------------------------------
 # Load crisis keyword lexicon
@@ -206,6 +253,7 @@ def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, float]:
         "keyword_score": float
     }
     """
+    articles = _annotate_and_filter_articles(articles)
     analyses = [analyze_article(a) for a in articles]
     return _build_contract_metrics(analyses)
 
@@ -223,7 +271,12 @@ def analyze_batch_detailed(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         avg_severity: mean combined_severity across all articles
         timestamp: ISO-format UTC time of analysis
     """
-    analyses = [analyze_article(a) for a in articles]
+    articles = _annotate_and_filter_articles(articles)
+    # Merge bert fields into each analysis result
+    analyses = [
+        {**analyze_article(a), "bert_confidence": a.get("bert_confidence"), "bert_label": a.get("bert_label")}
+        for a in articles
+    ]
 
     # Initialise service aggregation
     service_data: Dict[str, Dict] = {

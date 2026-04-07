@@ -226,10 +226,28 @@ def _start_scheduler(app: Flask) -> None:
         logger.warning("Could not start scheduler: %s", exc)
 
 
+def _prewarm_bert():
+    """Load BERT fake news model at startup so first API call doesn't timeout."""
+    try:
+        import sys, os
+        _root_services = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "services"))
+        if _root_services not in sys.path:
+            sys.path.append(_root_services)
+        from fake_news_filter import load_model
+        logger.info("Pre-warming BERT fake news model...")
+        load_model()
+        logger.info("BERT model ready.")
+    except Exception as exc:
+        logger.warning("BERT pre-warm skipped: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 app = create_app()
+from config import config as _config
+if _config.PREWARM_BERT:
+    _prewarm_bert()
 
 if __name__ == "__main__":
     from config import config

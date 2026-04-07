@@ -15,7 +15,6 @@ const NAV = [
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
   const { selectedCity, setSelectedCity } = useCrisis()
-
   return (
     <AnimatePresence>
       {isOpen && (

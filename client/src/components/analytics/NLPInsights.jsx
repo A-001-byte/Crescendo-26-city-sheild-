@@ -10,16 +10,26 @@ const SERVICE_COLORS = {
   logistics: '#6366F1',
 }
 
-function SentimentBar({ value }) {
-  // value: -1 to 1 (negative = bad, positive = good)
-  const pct = ((value + 1) / 2) * 100
-  const color = value < -0.3 ? '#EF4444' : value > 0.3 ? '#10B981' : '#F59E0B'
+function CredibilityBar({ confidence, label }) {
+  // confidence = probability this article is real news (from BERT)
+  // label = 'REAL' | 'FAKE' — what BERT classified it as
+  if (confidence == null) {
+    return <span className="text-[10px] text-text-muted font-mono">—</span>
+  }
+  // credibility = probability the article is genuine news (backend already normalised to 0-1)
+  const credibility = confidence
+  const pct = credibility * 100
+  const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444'
+  const tag = pct >= 80 ? 'Credible' : pct >= 50 ? 'Uncertain' : 'Unreliable'
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+        </div>
+        <span className="text-[10px] font-mono w-8 text-right" style={{ color }}>{pct.toFixed(0)}%</span>
       </div>
-      <span className="text-[10px] font-mono" style={{ color }}>{value.toFixed(2)}</span>
+      <span className="text-[9px] font-mono" style={{ color }}>{tag}</span>
     </div>
   )
 }
@@ -32,11 +42,6 @@ export default function NLPInsights() {
     fetchLatestEvents(20).then(d => { if (Array.isArray(d)) setEvents(d) }).catch(() => {})
     fetchSignals().then(d => { if (d) setSignals(d) }).catch(() => {})
   }, [])
-
-  const enrichedEvents = events.map(e => ({
-    ...e,
-    sentiment: Number.isFinite(Number(e.combined_severity)) ? -(Number(e.combined_severity) * 2 - 1) : 0,
-  }))
 
   return (
     <div className="space-y-4">
@@ -53,13 +58,13 @@ export default function NLPInsights() {
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Time</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Source</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Headline</th>
-                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">Sentiment</th>
+                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">Credibility</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Severity</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Services</th>
               </tr>
             </thead>
             <tbody>
-              {enrichedEvents.map((e) => (
+              {events.map((e) => (
                 <tr key={e.id} className="border-b border-border-default/50 hover:bg-bg-elevated/40 transition-colors">
                   <td className="px-4 py-2.5 text-text-muted font-mono whitespace-nowrap">
                     {formatRelativeTime(e.published_at)}
@@ -69,7 +74,7 @@ export default function NLPInsights() {
                     {truncate(e.title, 60)}
                   </td>
                   <td className="px-4 py-2.5 w-28">
-                    <SentimentBar value={e.sentiment} />
+                    <CredibilityBar confidence={e.bert_confidence} label={e.bert_label} />
                   </td>
                   <td className="px-4 py-2.5">
                     <StatusBadge severity={e.severity} />

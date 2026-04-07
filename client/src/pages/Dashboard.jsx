@@ -9,13 +9,6 @@ import AnimatedCounter from '../components/common/AnimatedCounter'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { getCityRisk } from '../api/riskApi'
 
-const STAT_CARDS = [
-  { label: 'Active Alerts', value: 12, icon: 'error', color: 'text-error' },
-  { label: 'Zones Monitored', value: 48, icon: 'radar', color: 'text-primary' },
-  { label: 'Events Analyzed', value: 1847, icon: 'monitoring', color: 'text-primary' },
-  { label: 'Uptime %', value: 99.7, icon: 'timer', color: 'text-tertiary-container', decimals: 1 },
-]
-
 export default function Dashboard() {
   const { score, services, loading, lastUpdated, selectedCity } = useCrisis()
   const [cityRiskData, setCityRiskData] = useState(null)
@@ -34,7 +27,10 @@ export default function Dashboard() {
           setCityRiskData(data?.data ?? data)
         }
       } catch {
-        if (mounted) setCityRiskError(true)
+        if (mounted) {
+          setCityRiskError(true)
+          setCityRiskData(null)
+        }
       } finally {
         if (mounted) setCityRiskLoading(false)
       }
@@ -43,6 +39,23 @@ export default function Dashboard() {
     loadCityRisk()
     return () => { mounted = false }
   }, [selectedCity])
+
+  const statCards = useMemo(() => [
+    {
+      label: 'Active Alerts',
+      value: cityRiskData?.alerts?.length ?? 0,
+      icon: 'error',
+      color: 'text-error',
+    },
+    {
+      label: 'Zones Monitored',
+      value: Object.keys(cityRiskData?.ward_scores ?? {}).length || 48,
+      icon: 'radar',
+      color: 'text-primary',
+    },
+    { label: 'Events Analyzed', value: 1847, icon: 'monitoring', color: 'text-primary' },
+    { label: 'Uptime %', value: 99.7, icon: 'timer', color: 'text-tertiary-container', decimals: 1 },
+  ], [cityRiskData])
 
   const normalizedScores = useMemo(() => {
     if (!cityRiskData) return null
@@ -149,7 +162,7 @@ export default function Dashboard() {
           <div className="lg:col-span-5 flex justify-end">
             <div className="bg-surface-container-lowest rounded-[2rem] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] aspect-square w-full max-w-[300px] self-start">
               <div className="grid grid-cols-2 gap-3 h-full">
-                {STAT_CARDS.map(({ label, value, icon, color, decimals }) => (
+                {statCards.map(({ label, value, icon, color, decimals }) => (
                   <div
                     key={label}
                     className="flex flex-col gap-3 bg-surface-container-low rounded-[1.5rem] p-3"

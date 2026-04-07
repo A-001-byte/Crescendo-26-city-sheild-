@@ -12,7 +12,7 @@ const toUpperTick = (label) => String(label ?? '').toUpperCase()
 const SERVICES = [
   { key: 'fuel', color: '#ba1a1a', label: 'Fuel' },
   { key: 'power', color: '#000000', label: 'Power' },
-  { key: 'food', color: '#2771df', label: 'Food' },
+  { key: 'food', color: '#22c55e', label: 'Food' },
   { key: 'logistics', color: '#c6c6c6', label: 'Logistics' },
 ]
 
@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             <span className="material-symbols-outlined text-[10px]" style={{ color: p.color }}>circle</span>
             <span className="text-xs font-bold uppercase tracking-widest text-primary">{p.name}</span>
           </div>
-          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{Number(p?.value ?? 0).toFixed(1)}</span>
+          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value != null ? p.value.toFixed(1) : '—'}</span>
         </div>
       ))}
     </div>
