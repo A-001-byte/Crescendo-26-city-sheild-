@@ -108,7 +108,47 @@ def generate_recommendation(primary_risk_category: str) -> str:
     else:
         return "Monitor all systems and maintain standard operational procedures."
 
-def calculate_risk(nlp_signals=None, oil_data=None):
+def _parse_nlp_inputs(nlp_signals):
+    """Extract sentiment and keyword score from NLP payload."""
+    sentiment = None
+    keyword_score = None
+
+    if not isinstance(nlp_signals, dict):
+        return sentiment, keyword_score
+
+    try:
+        if nlp_signals.get("sentiment") is not None:
+            sentiment = float(nlp_signals.get("sentiment"))
+    except (TypeError, ValueError):
+        sentiment = None
+
+    try:
+        if nlp_signals.get("keyword_score") is not None:
+            keyword_score = float(nlp_signals.get("keyword_score"))
+        elif nlp_signals.get("avg_severity") is not None:
+            keyword_score = float(nlp_signals.get("avg_severity"))
+    except (TypeError, ValueError):
+        keyword_score = None
+
+    return sentiment, keyword_score
+
+
+def _parse_oil_price(oil_data):
+    """Extract a current price from known oil payload keys."""
+    if not isinstance(oil_data, dict):
+        return None
+
+    for key in ("brent_current", "current_price", "price", "wti_current"):
+        if oil_data.get(key) is not None:
+            try:
+                return float(oil_data.get(key))
+            except (TypeError, ValueError):
+                continue
+
+    return None
+
+
+def calculate_risk(nlp_signals=None, oil_data=None, use_mock_data=False):
     """
     Calculates the city risk score and generates actionable intelligence.
 
@@ -124,61 +164,50 @@ def calculate_risk(nlp_signals=None, oil_data=None):
     9.  Generates alerts, trend predictions, and recommendations.
     10. Returns a composite dictionary with all intelligence layers.
     """
-    # 1. Resolve inputs (prefer provided live inputs, fallback to defaults)
-    default_nlp = get_nlp_signals()
-    sentiment = default_nlp["sentiment"]
-    keyword_score = default_nlp["keyword_score"]
+    # 1. Resolve inputs from provided live payloads first
+    sentiment, keyword_score = _parse_nlp_inputs(nlp_signals)
+    current_price = _parse_oil_price(oil_data)
 
-    if isinstance(nlp_signals, dict):
-        try:
-            if nlp_signals.get("sentiment") is not None:
-                sentiment = float(nlp_signals.get("sentiment"))
-        except (TypeError, ValueError):
-            pass
-        try:
-            if nlp_signals.get("keyword_score") is not None:
-                keyword_score = float(nlp_signals.get("keyword_score"))
-            elif nlp_signals.get("avg_severity") is not None:
-                keyword_score = float(nlp_signals.get("avg_severity"))
-        except (TypeError, ValueError):
-            pass
+    # 2. Only use local mocks when explicitly enabled
+    if use_mock_data:
+        if sentiment is None or keyword_score is None:
+            default_nlp = get_nlp_signals()
+            if sentiment is None:
+                sentiment = default_nlp["sentiment"]
+            if keyword_score is None:
+                keyword_score = default_nlp["keyword_score"]
+        if current_price is None:
+            current_price = get_oil_price()
 
-    current_price = get_oil_price()
-    if isinstance(oil_data, dict):
-        for key in ("brent_current", "current_price", "price", "wti_current"):
-            if oil_data.get(key) is not None:
-                try:
-                    current_price = float(oil_data.get(key))
-                    break
-                except (TypeError, ValueError):
-                    continue
+    if sentiment is None or keyword_score is None or current_price is None:
+        raise ValueError("Missing required live inputs: nlp_signals(sentiment/keyword_score) and oil_data(current price)")
 
-    # 2. Add keyword floor to ensure minimum signal strength
+    # 3. Add keyword floor to ensure minimum signal strength
     keyword_score = max(keyword_score, 2)
 
-    # 3. Define baselines
+    # 4. Define baselines
     price_baseline = 70.0
     baseline_risk = 3
 
-    # 4. Compute oil impact
+    # 5. Compute oil impact
     oil_impact = max(0, (current_price - price_baseline) / price_baseline)
 
-    # 5. Calculate base risk with strengthened sentiment impact
+    # 6. Calculate base risk with strengthened sentiment impact
     base_risk = baseline_risk + (-sentiment * 5) + (keyword_score * 1.2)
 
-    # 6. Create category-wise scores
+    # 7. Create category-wise scores
     fuel = base_risk * 1.2 + (oil_impact * 3.5)
     transport = base_risk * 1.1 + (oil_impact * 3)
     food = base_risk * 0.9 + (oil_impact * 2)
     power = base_risk * 0.8 + (oil_impact * 1.5)
 
-    # 7. Apply minimum floor
+    # 8. Apply minimum floor
     fuel = apply_floor(fuel)
     transport = apply_floor(transport)
     food = apply_floor(food)
     power = apply_floor(power)
 
-    # 8. Normalize all scores
+    # 9. Normalize all scores
     normalized_scores = {
         "fuel": normalize_score(fuel),
         "food": normalize_score(food),
@@ -187,7 +216,7 @@ def calculate_risk(nlp_signals=None, oil_data=None):
         "sentiment": sentiment
     }
     
-    # 9. Generate intelligence features
+    # 10. Generate intelligence features
     alerts = generate_alerts(normalized_scores)
     trend = predict_trend(normalized_scores)
     primary_risk = get_primary_risk(normalized_scores)
@@ -202,7 +231,7 @@ def calculate_risk(nlp_signals=None, oil_data=None):
     print(f"Base Risk: {base_risk:.2f}")
     print("--------------------")
 
-    # 10. Return updated format
+    # 11. Return updated format
     return {
         "scores": normalized_scores,
         "alerts": alerts,
@@ -233,21 +262,23 @@ def _load_wards() -> list:
         return []
 
 
-def calculate_city_risk_score(nlp_signals=None, oil_data=None):
+def calculate_city_risk_score(nlp_signals=None, oil_data=None, use_mock_data=False, include_wards=True):
     """Compatibility wrapper used by existing routes/app code."""
-    result = calculate_risk(nlp_signals=nlp_signals, oil_data=oil_data)
+    result = calculate_risk(nlp_signals=nlp_signals, oil_data=oil_data, use_mock_data=use_mock_data)
     scores = result.get("scores", {})
     component_keys = ["fuel", "food", "transport", "power"]
     base_values = [scores.get(k, 1) for k in component_keys]
     overall = round(sum(base_values) / len(base_values), 2)
+    clamped_overall = max(1, min(10, overall))
 
     ward_scores = {}
-    for ward in _load_wards():
-        ward_scores[ward] = max(1, min(10, round(overall + random.choice([-1, 0, 1]), 2)))
+    if include_wards:
+        for ward in _load_wards():
+            ward_scores[ward] = clamped_overall
 
     return {
-        "overall_crs": overall,
-        "alert_level": _alert_level_from_score(overall),
+        "overall_crs": clamped_overall,
+        "alert_level": _alert_level_from_score(clamped_overall),
         "scores": {k: scores.get(k, 1) for k in component_keys},
         "sentiment": scores.get("sentiment", 0),
         "alerts": result.get("alerts", []),
@@ -269,7 +300,7 @@ def generate_mock_historical_scores(days: int = 7):
     history = []
     days = max(1, min(int(days), 30))
     for i in range(days):
-        current = calculate_city_risk_score()
+        current = calculate_city_risk_score(use_mock_data=True, include_wards=False)
         history.append({
             "date": (datetime.utcnow() - timedelta(days=(days - i - 1))).strftime("%Y-%m-%d"),
             "overall_crs": current.get("overall_crs", 1),
@@ -284,7 +315,7 @@ def get_historical_scores(days: int = 7):
 
 
 def get_ward_score(ward_name: str):
-    city = calculate_city_risk_score()
+    city = calculate_city_risk_score(use_mock_data=True)
     ward_scores = city.get("ward_scores", {})
     if ward_name not in ward_scores:
         return None
@@ -300,7 +331,7 @@ def get_ward_score(ward_name: str):
 # Add a test block
 if __name__ == "__main__":
     print("Calculating CityShield Risk Scores...")
-    risk_output = calculate_risk()
+    risk_output = calculate_risk(use_mock_data=True)
     print("\n--- Final Output ---")
     print(json.dumps(risk_output, indent=2))
     print("--------------------")
