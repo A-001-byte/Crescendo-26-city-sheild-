@@ -36,8 +36,8 @@ def create_app() -> Flask:
     app.config["SECRET_KEY"] = config.SECRET_KEY
     app.config["DEBUG"] = config.DEBUG
 
-    # CORS — allow all origins on /api/* (tighten in production)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    # CORS
+    CORS(app)
 
     # SocketIO
     socketio.init_app(
@@ -55,11 +55,13 @@ def create_app() -> Flask:
     from routes.events import events_bp
     from routes.alerts import alerts_bp
     from routes.city import city_bp
+    from routes.risk_routes import risk_bp
 
     app.register_blueprint(crisis_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(alerts_bp)
     app.register_blueprint(city_bp)
+    app.register_blueprint(risk_bp)
 
     # ------------------------------------------------------------------
     # Root health-check

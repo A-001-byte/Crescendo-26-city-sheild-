@@ -155,7 +155,8 @@ def calculate_risk():
         "fuel": normalize_score(fuel),
         "food": normalize_score(food),
         "transport": normalize_score(transport),
-        "power": normalize_score(power)
+        "power": normalize_score(power),
+        "sentiment": sentiment
     }
     
     # 9. Generate intelligence features
