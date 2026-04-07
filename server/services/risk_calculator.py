@@ -1,19 +1,9 @@
 import random
 import json
-
-# Mock functions as per the user's context description
-# In a real scenario, these would be imported from their respective modules.
-
-def get_nlp_signals():
-    """
-    Mock function to simulate fetching NLP signals.
-    In the actual implementation, this would be:
-    from services.nlp_engine import get_nlp_signals
-    """
-    return {
-        "sentiment": random.uniform(-0.8, 0.2),  # Simulate a generally negative sentiment
-        "keyword_score": random.uniform(0, 8)
-    }
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
+from nlp_engine import get_nlp_signals
 
 def get_oil_price():
     """
