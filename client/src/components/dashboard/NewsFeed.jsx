@@ -39,16 +39,16 @@ export default function NewsFeed({ alertBannerText, primaryRiskCategory, recomme
 
   return (
     <div
-      className="flex flex-col h-full rounded-2xl overflow-hidden"
-      style={{ background: '#FFFFFF', border: '1px solid #DBEAFE', boxShadow: '0 2px 16px rgba(59,130,246,0.07)' }}
+      className="flex flex-col h-full overflow-hidden shadow-sm"
+      style={{ background: '#F8FAFC', border: '1px solid #DBEAFE' }}
     >
       <div
         className="flex items-center justify-between px-4 pt-4 pb-3 flex-shrink-0"
         style={{ borderBottom: '1px solid #EFF6FF' }}
       >
-        <h3 className="font-heading font-bold text-sm" style={{ color: '#0F172A' }}>News Feed</h3>
+        <h3 className="font-heading font-semibold text-sm tracking-wide uppercase" style={{ color: '#0F172A' }}>News Feed</h3>
         <span
-          className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+          className="text-[10px] font-mono px-2 py-0.5 tracking-wide uppercase"
           style={{ background: '#EFF6FF', color: '#3B82F6' }}
         >
           {feedItems.length} updates
@@ -60,16 +60,16 @@ export default function NewsFeed({ alertBannerText, primaryRiskCategory, recomme
           <div
             key={news.id}
             onClick={() => window.open('#', '_blank')}
-            className={`flex flex-row items-center cursor-pointer transition-colors hover:bg-blue-50 py-3 ${
+            className={`flex flex-row items-center py-3 ${
                 idx !== feedItems.length - 1 ? 'border-b border-[#E5E7EB]' : ''
             }`}
           >
             <img 
               src={news.image} 
               alt="news thumbnail" 
-              className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl flex-shrink-0 mr-4 shadow-sm"
+              className="w-20 h-20 sm:w-24 sm:h-24 object-cover flex-shrink-0 mr-4"
             />
-            <div className="flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+            <div className="flex flex-col">
               <span className="text-sm text-gray-500 mb-1">{news.time}</span>
               <span className="font-semibold text-base sm:text-lg text-gray-900 leading-snug">
                 {news.title}

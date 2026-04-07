@@ -40,8 +40,9 @@ export default function AlertFeed() {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2 space-y-3">
-        {items.map((alert, idx) => {
+      <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {items.map((alert, idx) => {
           const cfg = SEVERITY_CONFIG[alert.severity] || SEVERITY_CONFIG.low
 
           return (
@@ -51,7 +52,7 @@ export default function AlertFeed() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: idx * 0.05, duration: 0.3 }}
               whileHover={{ scale: 1.05 }}
-              className="flex items-center justify-center p-3 rounded-full shadow-sm cursor-default"
+              className="max-w-md mx-auto w-full flex items-center justify-center p-3 rounded-full shadow-sm cursor-default"
               style={{ backgroundColor: cfg.bg, color: cfg.text }}
             >
               <span className="font-bold tracking-widest text-sm text-center">
@@ -59,7 +60,8 @@ export default function AlertFeed() {
               </span>
             </motion.div>
           )
-        })}
+          })}
+        </div>
       </div>
     </div>
   )

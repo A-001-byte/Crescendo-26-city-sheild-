@@ -1,7 +1,6 @@
 import { Flame, Zap, Wheat, Truck, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 import { getRiskColor, getRiskLabel } from '../../utils/riskCalculations'
-import { motion } from 'framer-motion'
 
 const SERVICES = [
   {
@@ -42,14 +41,6 @@ const SERVICES = [
   },
 ]
 
-// Risk-level glow color
-function getRiskGlow(score) {
-  if (score >= 9) return 'rgba(127,29,29,0.18)'
-  if (score >= 7) return 'rgba(239,68,68,0.16)'
-  if (score >= 4) return 'rgba(245,158,11,0.14)'
-  return 'rgba(16,185,129,0.14)'
-}
-
 function ServiceCard({ service, data }) {
   const Icon = service.icon
   const score = data?.score ?? service.defaultScore
@@ -57,36 +48,30 @@ function ServiceCard({ service, data }) {
   const trendArr = Array.isArray(data?.trend) ? data.trend : service.defaultTrend
   const trend = trendArr.map((v) => ({ v }))
   const riskColor = getRiskColor(score)
-  const glowColor = getRiskGlow(score)
+  const cardBg = score >= 8 ? '#FEF2F2' : score >= 4 ? '#FEFCE8' : '#F0FDF4'
 
   const DeltaIcon = delta > 0.05 ? TrendingUp : delta < -0.05 ? TrendingDown : Minus
   const deltaColor = delta > 0.05 ? '#EF4444' : delta < -0.05 ? '#10B981' : '#94A3B8'
 
   return (
-    <motion.div
-      className="rounded-2xl p-4 flex flex-col justify-between cursor-default"
+    <div
+      className="p-4 flex flex-col justify-between cursor-default"
       style={{
-        background: '#FFFFFF',
+        background: cardBg,
         border: `1px solid #E2E8F0`,
         borderLeft: `4px solid ${service.color}`,
-        boxShadow: `0 2px 12px rgba(0,0,0,0.05)`,
-        transition: 'all 0.25s ease',
-      }}
-      whileHover={{
-        scale: 1.025,
-        boxShadow: `0 8px 30px ${glowColor}, 0 2px 8px rgba(0,0,0,0.08)`,
-        borderColor: service.color,
+        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
       }}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            className="w-8 h-8 flex items-center justify-center"
             style={{ backgroundColor: `${service.color}18` }}
           >
             <Icon className="w-4 h-4" style={{ color: service.color }} />
           </div>
-          <span className="text-sm font-body font-semibold" style={{ color: '#334155' }}>{service.label}</span>
+          <span className="text-sm font-body font-semibold tracking-wide uppercase" style={{ color: '#334155' }}>{service.label}</span>
         </div>
         <div className="flex items-center gap-1" style={{ color: deltaColor }}>
           <DeltaIcon className="w-3.5 h-3.5" />
@@ -111,18 +96,13 @@ function ServiceCard({ service, data }) {
         <div style={{ width: 100, height: 40 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trend} margin={{ top: 2, bottom: 2, left: 0, right: 0 }}>
-              <defs>
-                <linearGradient id={`grad-${service.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={service.color} stopOpacity={0.35} />
-                  <stop offset="95%" stopColor={service.color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <Area
                 type="monotone"
                 dataKey="v"
                 stroke={service.color}
                 strokeWidth={2}
-                fill={`url(#grad-${service.key})`}
+                fill={service.color}
+                fillOpacity={0.2}
                 dot={false}
                 isAnimationActive={false}
               />
@@ -136,7 +116,7 @@ function ServiceCard({ service, data }) {
           {delta > 0.05 ? '▲' : delta < -0.05 ? '▼' : '—'} {Math.abs(delta).toFixed(1)} from 6h ago
         </span>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

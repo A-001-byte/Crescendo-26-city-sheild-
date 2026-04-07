@@ -9,7 +9,7 @@ import AnimatedCounter from '../components/common/AnimatedCounter'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { getRiskColor } from '../utils/riskCalculations'
 import { getCityRisk } from '../api/riskApi'
-import { Shield, Radio, BarChart2, Clock } from 'lucide-react'
+import { Shield, Radio, BarChart2, Clock, AlertTriangle } from 'lucide-react'
 
 const STAT_CARDS = [
   { label: 'Active Alerts', value: 12, icon: Shield, color: '#EF4444' },
@@ -73,6 +73,27 @@ export default function Dashboard() {
       ? `Alert: ${primaryRiskCategory} risk is currently the most elevated.`
       : undefined)
 
+  const primaryRiskScore = [
+    { key: 'fuel', value: Number.isFinite(apiFuel) ? apiFuel : -Infinity },
+    { key: 'food', value: Number.isFinite(apiFood) ? apiFood : -Infinity },
+    { key: 'transport', value: Number.isFinite(apiTransport) ? apiTransport : -Infinity },
+    { key: 'power', value: Number.isFinite(apiPower) ? apiPower : -Infinity },
+  ].find((s) => s.key === primaryRiskCategory)?.value
+
+  const primaryRiskColor =
+    primaryRiskScore >= 8 ? '#DC2626' :
+    primaryRiskScore >= 4 ? '#EAB308' :
+    '#16A34A'
+
+  const bannerBg =
+    primaryRiskScore >= 8 ? '#FEE2E2' :
+    primaryRiskScore >= 4 ? '#FEF9C3' :
+    '#DCFCE7'
+  const bannerTextColor =
+    primaryRiskScore >= 8 ? '#7F1D1D' :
+    primaryRiskScore >= 4 ? '#713F12' :
+    '#14532D'
+
   const resolvedScore = Number.isFinite(Number(cityRiskData?.score))
     ? Number(cityRiskData.score)
     : score
@@ -107,22 +128,39 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6 p-6 w-full">
+      <div className="w-full border px-4 py-3 flex items-center gap-2" style={{ background: bannerBg, borderColor: primaryRiskColor, color: bannerTextColor }}>
+        <AlertTriangle className="w-4 h-4" />
+        <span className="text-sm font-bold">{alertBannerText || '⚠️ High Fuel Risk in Kothrud'}</span>
+      </div>
+
+      <div className="w-full border px-4 py-4 shadow-sm" style={{ background: '#F8FAFC', borderColor: '#E2E8F0' }}>
+        <div className="text-sm uppercase tracking-wide font-semibold text-text-muted mb-1">PRIMARY RISK</div>
+        <div className="text-3xl font-bold" style={{ color: primaryRiskColor }}>
+          Primary Risk: {primaryRiskCategory ? `${primaryRiskCategory.charAt(0).toUpperCase()}${primaryRiskCategory.slice(1)}` : 'Fuel'}
+        </div>
+      </div>
+
+      <div className="w-full border px-4 py-3 shadow-sm" style={{ background: '#EFF6FF', borderColor: '#E2E8F0' }}>
+        <span className="text-sm uppercase tracking-wide font-semibold text-text-primary">RECOMMENDED ACTION: </span>
+        <span className="text-sm text-text-secondary">{recommendationText || 'Avoid unnecessary travel'}</span>
+      </div>
+
       {/* Quick Stats Section */}
-      <div className="w-full bg-white rounded-xl shadow-md p-4 z-0 relative">
+      <div className="w-full bg-slate-50 border border-border-default p-4 z-0 relative shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {STAT_CARDS.map(({ label, value, icon: Icon, color, decimals }) => (
             <div
               key={label}
-              className="rounded-xl p-3.5 flex items-center gap-3 transition-colors hover:bg-gray-50 border border-gray-100"
+              className="p-3.5 flex items-center gap-3 border border-gray-100"
             >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
+              <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
                 <Icon className="w-5 h-5" style={{ color }} />
               </div>
               <div>
                 <div className="text-xl font-mono font-bold text-gray-900">
                   <AnimatedCounter value={value} decimals={decimals || 0} />
                 </div>
-                <div className="text-xs text-gray-500 font-semibold">{label}</div>
+                <div className="text-sm text-gray-500 font-semibold tracking-wide uppercase">{label}</div>
               </div>
             </div>
           ))}
@@ -131,9 +169,9 @@ export default function Dashboard() {
 
       {/* Gauge and Service Cards Section */}
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 z-0 relative">
-        <div className="col-span-1 lg:col-span-4 bg-white rounded-xl shadow-md p-4 flex flex-col relative z-0">
+        <div className="col-span-1 lg:col-span-4 bg-blue-50 border border-border-default p-4 flex flex-col relative z-0 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">City Risk Score</span>
+            <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">CITY RISK SCORE</span>
             {lastUpdated && (
               <span className="text-[10px] font-mono text-gray-400">
                 Updated {new Date(lastUpdated).toLocaleTimeString('en-IN', { timeStyle: 'short' })}
@@ -145,14 +183,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="col-span-1 lg:col-span-8 bg-white rounded-xl shadow-md p-4 relative z-0">
+        <div className="col-span-1 lg:col-span-8 bg-slate-50 border border-border-default p-4 relative z-0 shadow-sm">
           <ServiceCards data={resolvedServices} />
         </div>
       </div>
 
       {/* Timeline & News Feed Section */}
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 z-0 relative">
-        <div className="col-span-1 lg:col-span-8 bg-white rounded-xl shadow-md p-4 flex flex-col relative z-0 min-h-[350px]">
+        <div className="col-span-1 lg:col-span-8 bg-slate-50 border border-border-default p-4 flex flex-col relative z-0 min-h-[350px] shadow-sm">
           <RiskTimeline />
         </div>
         <div className="col-span-1 lg:col-span-4 relative z-0 flex flex-col">
@@ -165,8 +203,8 @@ export default function Dashboard() {
       </div>
 
       {/* Map Component Fix */}
-      <div className="w-full bg-white rounded-xl shadow-md p-4 relative z-0">
-        <div className="w-full h-[500px] rounded-xl overflow-hidden relative z-0">
+      <div className="w-full bg-slate-50 border border-border-default p-4 relative z-0 shadow-sm">
+        <div className="w-full h-[500px] overflow-hidden relative z-0 border border-border-default">
           <CityMap />
         </div>
       </div>

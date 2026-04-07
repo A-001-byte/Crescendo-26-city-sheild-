@@ -1,7 +1,6 @@
 export function getRiskColor(score) {
-  if (score <= 3) return '#10B981'
-  if (score <= 6) return '#F59E0B'
-  if (score <= 8) return '#EF4444'
+  if (score <= 3) return '#16A34A'
+  if (score <= 7) return '#EAB308'
   return '#DC2626'
 }
 
@@ -21,10 +20,10 @@ export function getRiskTailwindClass(score) {
 
 export function getAlertLevelColor(level) {
   switch (level?.toLowerCase()) {
-    case 'green': return '#10B981'
-    case 'yellow': return '#F59E0B'
-    case 'orange': return '#F97316'
-    case 'red': return '#EF4444'
+    case 'green': return '#16A34A'
+    case 'yellow':
+    case 'orange': return '#EAB308'
+    case 'red': return '#DC2626'
     default: return '#94A3B8'
   }
 }
