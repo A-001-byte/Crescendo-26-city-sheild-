@@ -2,19 +2,38 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import DashParticles from '../components/layout/DashParticles'
+import { loginUser } from '../utils/api'
+import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const [identity, setIdentity] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!identity.trim() || !password.trim()) {
       setError('Please fill in all required fields.')
       return
     }
-    setError('')
+
+    try {
+      const response = await loginUser({ identity: identity.trim(), password })
+      const token = response?.token || response?.access_token || response?.accessToken
+      const user = response?.user || { identity: identity.trim() }
+
+      if (!token) {
+        throw new Error('Authentication token missing from response.')
+      }
+
+      localStorage.setItem('cityshield_auth_token', token)
+      localStorage.setItem('cityshield_auth_user', JSON.stringify(user))
+      setError('')
+      navigate('/')
+    } catch (err) {
+      setError(err?.message || 'Login failed. Please try again.')
+    }
   }
 
   return (
@@ -66,7 +85,7 @@ export default function Login() {
                   placeholder="Email or Username"
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 
@@ -80,7 +99,7 @@ export default function Login() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 
@@ -100,6 +119,8 @@ export default function Login() {
             <div className="mt-6 text-right">
               <button
                 type="button"
+                disabled
+                aria-disabled="true"
                 className="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors duration-200"
               >
                 Forgot Password?

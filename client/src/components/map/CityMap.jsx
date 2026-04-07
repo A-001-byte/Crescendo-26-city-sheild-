@@ -1,5 +1,5 @@
 import 'leaflet/dist/leaflet.css'
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,6 +20,18 @@ const LAYER_BUTTONS = [
 ]
 
 function WardDetailPanel({ ward, onClose, position, mapRect }) {
+  const panelRef = useRef(null)
+  const [panelSize, setPanelSize] = useState({ width: 320, height: 450 })
+
+  useLayoutEffect(() => {
+    if (!panelRef.current) return
+    const measuredWidth = panelRef.current.offsetWidth
+    const measuredHeight = panelRef.current.offsetHeight
+    if (measuredWidth && measuredHeight) {
+      setPanelSize({ width: measuredWidth, height: measuredHeight })
+    }
+  }, [ward, position, mapRect])
+
   if (!ward) return null
   const scoreColor = getRiskColor(ward.riskScore)
   const services = [
@@ -29,9 +41,8 @@ function WardDetailPanel({ ward, onClose, position, mapRect }) {
     { label: 'Logistics', score: ward.logisticsScore, color: '#5e5e5f' },
   ]
   
-  // Calculate bounds to prevent overflow (popup ~ 320x450 roughly)
-  const popupWidth = 320;
-  const popupHeight = 450;
+  const popupWidth = panelSize.width || 320
+  const popupHeight = panelSize.height || 450
   let left = 16;
   let top = 16;
   
@@ -43,12 +54,13 @@ function WardDetailPanel({ ward, onClose, position, mapRect }) {
 
   return (
     <motion.div
+      ref={panelRef}
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 20, opacity: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
       style={{ left, top, width: popupWidth }}
-      className="absolute z-[30] p-8 shadow-2xl bg-surface-container-lowest rounded-[3rem] border border-outline-variant/30"
+      className="absolute z-[30] p-8 shadow-2xl bg-surface-container-lowest rounded-[3rem] border border-outline-variant/30 min-w-[280px] max-w-[360px]"
     >
       <div className="flex items-start justify-between mb-8">
         <div className="flex flex-col">
@@ -110,19 +122,33 @@ export default function CityMap() {
   const [activeLayer, setActiveLayer] = useState('wards')
   const [selectedWard, setSelectedWard] = useState(null)
   const [mapRect, setMapRect] = useState(null)
+  const wrapperRef = useRef(null)
 
   const handleWardSelect = (ward, e) => {
-    // If e exists, it might have originalEvent for pointer x/y
-    const x = e?.originalEvent?.layerX || 100;
-    const y = e?.originalEvent?.layerY || 100;
+    const originalEvent = e?.originalEvent
+    const resolvedContainer =
+      originalEvent?.target?.closest('.map-container') ||
+      wrapperRef.current?.querySelector('.map-container') ||
+      wrapperRef.current ||
+      document.body
 
-    const rect = e?.originalEvent?.target?.closest('.map-container')?.getBoundingClientRect() || { width: 1200, height: 600 };
-    setMapRect(rect);
-    setSelectedWard({ ward, position: { x, y } });
+    const rect = resolvedContainer.getBoundingClientRect()
+    const clientX = Number.isFinite(originalEvent?.clientX)
+      ? originalEvent.clientX
+      : rect.left + rect.width / 2
+    const clientY = Number.isFinite(originalEvent?.clientY)
+      ? originalEvent.clientY
+      : rect.top + rect.height / 2
+
+    const relX = Math.max(0, Math.min(clientX - rect.left, rect.width))
+    const relY = Math.max(0, Math.min(clientY - rect.top, rect.height))
+
+    setMapRect(rect)
+    setSelectedWard({ ward, position: { x: relX, y: relY } })
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden isolate map-wrapper">
+    <div ref={wrapperRef} className="relative h-full w-full overflow-hidden isolate map-wrapper">
       <MapContainer
         center={[18.5204, 73.8567]}
         zoom={12}

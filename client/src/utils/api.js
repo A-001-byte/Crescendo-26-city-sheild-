@@ -128,4 +128,24 @@ export const fetchInfrastructure = async () => {
   return unwrap(res)
 }
 
+export const loginUser = async ({ identity, password }) => {
+  try {
+    const res = await api.post('/auth/login', { identity, password })
+    return unwrap(res)
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.response?.data?.error || 'Login failed. Please try again.'
+    throw new Error(message)
+  }
+}
+
+export const signupUser = async ({ fullName, email, password }) => {
+  try {
+    const res = await api.post('/auth/signup', { fullName, email, password })
+    return unwrap(res)
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.response?.data?.error || 'Signup failed. Please try again.'
+    throw new Error(message)
+  }
+}
+
 export default api

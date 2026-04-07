@@ -13,7 +13,7 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))
 }
 
-function createParticles(width, height, dpr) {
+function createParticles(width, height) {
   const area = width * height
   const estimate = Math.floor(area / 42000)
   const count = clamp(estimate, MIN_PARTICLES, MAX_PARTICLES)
@@ -22,7 +22,7 @@ function createParticles(width, height, dpr) {
     const x = Math.random() * width
     const y = Math.random() * height
     const angle = Math.random() * Math.PI * 2
-    const speed = (Math.random() * 0.4 + 0.6) * BASE_DRIFT * dpr
+    const speed = (Math.random() * 0.4 + 0.6) * BASE_DRIFT
     return {
       x,
       y,
@@ -69,7 +69,7 @@ export default function DashParticles() {
       canvas.style.width = `${width}px`
       canvas.style.height = `${height}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      particles = createParticles(width, height, dpr)
+      particles = createParticles(width, height)
     }
 
     const onPointerMove = (e) => {

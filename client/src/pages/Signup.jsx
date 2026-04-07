@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import DashParticles from '../components/layout/DashParticles'
+import { signupUser } from '../utils/api'
+import { useNavigate } from 'react-router-dom'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -11,22 +15,45 @@ export default function Signup() {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.fullName.trim() || !form.email.trim() || !form.password.trim() || !form.confirmPassword.trim()) {
       setError('Please fill in all required fields.')
+      return
+    }
+    if (!EMAIL_REGEX.test(form.email.trim())) {
+      setError('Please enter a valid email address.')
       return
     }
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.')
       return
     }
-    setError('')
+
+    try {
+      const response = await signupUser({
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+      })
+
+      const token = response?.token || response?.access_token || response?.accessToken
+      const user = response?.user || { fullName: form.fullName.trim(), email: form.email.trim() }
+      if (token) {
+        localStorage.setItem('cityshield_auth_token', token)
+      }
+      localStorage.setItem('cityshield_auth_user', JSON.stringify(user))
+      setError('')
+      navigate('/')
+    } catch (err) {
+      setError(err?.message || 'Signup failed. Please try again.')
+    }
   }
 
   return (
@@ -78,7 +105,7 @@ export default function Signup() {
                   placeholder="Full Name"
                   value={form.fullName}
                   onChange={handleChange('fullName')}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 
@@ -92,7 +119,7 @@ export default function Signup() {
                   placeholder="Email"
                   value={form.email}
                   onChange={handleChange('email')}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 
@@ -106,7 +133,7 @@ export default function Signup() {
                   placeholder="Password"
                   value={form.password}
                   onChange={handleChange('password')}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 
@@ -120,7 +147,7 @@ export default function Signup() {
                   placeholder="Confirm Password"
                   value={form.confirmPassword}
                   onChange={handleChange('confirmPassword')}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus:bg-surface-container-lowest transition-all duration-200"
+                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
                 />
               </div>
 

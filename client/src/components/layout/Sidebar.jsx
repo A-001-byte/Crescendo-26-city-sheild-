@@ -2,6 +2,8 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCrisis } from '../../context/CrisisContext'
 
+const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
+
 const NAV = [
   { to: '/', icon: 'dashboard', label: 'Dashboard', exact: true },
   { to: '/map', icon: 'map', label: 'Map View' },
@@ -13,8 +15,6 @@ const NAV = [
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
   const { selectedCity, setSelectedCity } = useCrisis()
-
-  const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
 
   return (
     <AnimatePresence>
@@ -56,7 +56,10 @@ export default function Sidebar({ isOpen, onClose }) {
 
             <div className="px-8">
               <div className="relative border border-outline-variant/40 rounded-full overflow-hidden bg-surface-container-lowest">
+                <label htmlFor="sidebar-city-select" className="sr-only">City</label>
                 <select
+                  id="sidebar-city-select"
+                  aria-label="City"
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
                   className="w-full appearance-none bg-transparent font-bold uppercase tracking-widest text-xs px-5 py-3 text-primary focus:outline-none"
@@ -90,6 +93,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         }`
                       }
                     >
+                      <span className="material-symbols-outlined z-10 text-sm" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
                       <span className="text-xs font-extrabold uppercase tracking-widest z-10 mt-0.5">{label}</span>
                       {isActive && (
                         <motion.div

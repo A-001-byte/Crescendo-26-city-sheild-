@@ -8,7 +8,7 @@ export default function Analytics() {
         <div className="col-span-1 lg:col-span-8 space-y-4">
           <NLPInsights />
         </div>
-        <div className="col-span-1 lg:col-span-4" style={{ height: 'calc(100vh - 96px)', overflowY: 'auto' }}>
+        <div className="col-span-1 lg:col-span-4 overflow-y-visible lg:overflow-y-auto lg:h-[calc(100vh-96px)]">
           <TrendCharts />
         </div>
       </div>

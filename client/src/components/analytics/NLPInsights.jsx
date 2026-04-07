@@ -79,7 +79,7 @@ export default function NLPInsights() {
                       {(e.affected_services || []).map(s => (
                         <span
                           key={s}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+                          className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono"
                           style={{ backgroundColor: `${SERVICE_COLORS[s]}20`, color: SERVICE_COLORS[s] }}
                         >
                           {s}
