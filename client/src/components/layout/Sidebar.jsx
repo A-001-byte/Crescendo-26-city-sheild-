@@ -1,26 +1,25 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  LayoutDashboard, Map, Bell, BarChart2, Settings,
-  Shield, X
-} from 'lucide-react'
+import { useCrisis } from '../../context/CrisisContext'
 
 const NAV = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-  { to: '/map', icon: Map, label: 'Map View' },
-  { to: '/alerts', icon: Bell, label: 'Alerts' },
-  { to: '/analytics', icon: BarChart2, label: 'Analytics' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/', icon: 'dashboard', label: 'Dashboard', exact: true },
+  { to: '/map', icon: 'map', label: 'Map View' },
+  { to: '/alerts', icon: 'notifications', label: 'Alerts' },
+  { to: '/analytics', icon: 'analytics', label: 'Analytics' },
+  { to: '/settings', icon: 'settings', label: 'Settings' },
 ]
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
+  const { selectedCity, setSelectedCity } = useCrisis()
+
+  const CITIES = ['Pune', 'Mumbai', 'Nagpur', 'Nashik']
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -28,49 +27,53 @@ export default function Sidebar({ isOpen, onClose }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-[9998] pointer-events-auto"
-            style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(15,23,42,0.25)' }}
+            className="fixed inset-0 z-[90] pointer-events-auto bg-primary/5 backdrop-blur-sm"
           />
 
-          {/* Sidebar Panel */}
           <motion.aside
             key="sidebar"
-            initial={{ x: -280, opacity: 0 }}
+            initial={{ x: -400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed top-0 left-0 h-full w-64 z-[9999] pointer-events-auto flex flex-col shadow-2xl"
-            style={{
-              background: 'linear-gradient(160deg, #FFFFFF 0%, #EDF4FF 100%)',
-              borderRight: '1px solid #DBEAFE',
-            }}
+            exit={{ x: -400, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            className="sidebar-active fixed top-0 left-0 h-full w-[340px] flex flex-col glass-panel border-r border-outline-variant/30 z-[100] pointer-events-auto"
           >
-            {/* Logo */}
-            <div className="h-16 flex items-center justify-between px-5 border-b border-blue-100 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
-                  style={{ background: 'linear-gradient(135deg, #3B82F6, #06B6D4)' }}>
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-heading font-bold text-text-primary text-lg tracking-tight">
+            <div className="h-32 flex items-center justify-between px-8 flex-shrink-0">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-secondary mb-1">Architecture</span>
+                <span className="font-extrabold text-primary text-2xl letter-spacing-tight uppercase">
                   CityShield
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-blue-50 transition-colors"
+                aria-label="Close sidebar"
+                className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors"
               >
-                <X className="w-4 h-4" />
+                <span aria-hidden="true" className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
 
-            {/* Nav */}
-            <nav className="flex-1 py-4 overflow-y-auto">
-              <div className="px-3 mb-2">
-                <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest px-2">Navigation</span>
+            <div className="px-8">
+              <div className="relative border border-outline-variant/40 rounded-full overflow-hidden bg-surface-container-lowest">
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full appearance-none bg-transparent font-bold uppercase tracking-widest text-xs px-5 py-3 text-primary focus:outline-none"
+                >
+                  {CITIES.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-sm text-primary">unfold_more</span>
+                </div>
               </div>
-              <div className="space-y-1 px-2">
-                {NAV.map(({ to, icon: Icon, label, exact }) => {
+            </div>
+
+            <nav className="flex-1 py-8 overflow-y-auto px-6">
+              <div className="space-y-4">
+                {NAV.map(({ to, icon, label, exact }) => {
                   const isActive = exact
                     ? location.pathname === to
                     : location.pathname.startsWith(to)
@@ -80,21 +83,19 @@ export default function Sidebar({ isOpen, onClose }) {
                       to={to}
                       onClick={onClose}
                       className={() =>
-                        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+                        `relative flex items-center gap-4 px-6 py-4 rounded-full transition-all duration-300 group overflow-hidden ${
                           isActive
-                            ? 'bg-accent-blue text-white shadow-md shadow-blue-200'
-                            : 'text-text-secondary hover:text-text-primary hover:bg-blue-50'
+                            ? 'bg-primary text-white shadow-2xl'
+                            : 'bg-surface-container-lowest text-primary border border-outline-variant/30 hover:border-primary'
                         }`
                       }
                     >
-                      <Icon className={`w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-accent-blue'}`} />
-                      <span className="text-sm font-body font-medium">{label}</span>
+                      <span className="text-xs font-extrabold uppercase tracking-widest z-10 mt-0.5">{label}</span>
                       {isActive && (
                         <motion.div
-                          layoutId="activeNav"
-                          className="absolute inset-0 rounded-xl"
-                          style={{ zIndex: -1, background: 'linear-gradient(135deg, #3B82F6, #06B6D4)' }}
-                          transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                          layoutId="activeNavIndicator"
+                          className="absolute inset-0 bg-primary z-0"
+                          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
                         />
                       )}
                     </NavLink>
@@ -103,14 +104,13 @@ export default function Sidebar({ isOpen, onClose }) {
               </div>
             </nav>
 
-            {/* Status Footer */}
-            <div className="px-4 py-4 border-t border-blue-100">
-              <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2">
-                <div className="w-2 h-2 rounded-full bg-risk-low flex-shrink-0 animate-pulse" />
-                <span className="text-xs text-text-secondary">All Systems Operational</span>
+            <div className="px-8 py-10">
+              <div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant/30 rounded-full px-5 py-4">
+                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 animate-pulse" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Systems Active</span>
               </div>
-              <div className="mt-3 text-center">
-                <span className="text-[10px] text-text-muted font-mono">CityShield v1.0 · Pune ICCC</span>
+              <div className="mt-6 text-center">
+                <span className="text-[10px] text-secondary tracking-widest uppercase">Version 2.0</span>
               </div>
             </div>
           </motion.aside>
