@@ -2,9 +2,15 @@
 # CityShield News Fetcher
 # Responsibility: Fetch live headlines from NewsAPI with fallback to mock data.
 
+import os
 import requests
 
-NEWSAPI_KEY = "aa02239960f24c318f4beae91c419ade"
+NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY", "aa02239960f24c318f4beae91c419ade")
+if not NEWSAPI_KEY:
+    raise EnvironmentError(
+        "NEWSAPI_KEY environment variable is not set. "
+        "Export it before running: export NEWSAPI_KEY=your_key_here"
+    )
 
 TRUSTED_DOMAINS = (
     "reuters.com,bbc.com,thehindu.com,ndtv.com,"

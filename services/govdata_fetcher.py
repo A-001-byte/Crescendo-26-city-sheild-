@@ -2,11 +2,19 @@
 # CityShield Government Data Fetcher
 # Responsibility: Fetch India commodity price data from data.gov.in and return a supply score.
 
+import os
 import requests
+
+_GOVDATA_API_KEY = os.environ.get("GOVDATA_API_KEY", "579b464db66ec23bdd000001548d39482160445a55f6a76120fa3454")
+if not _GOVDATA_API_KEY:
+    raise EnvironmentError(
+        "GOVDATA_API_KEY environment variable is not set. "
+        "Export it before running: export GOVDATA_API_KEY=your_key_here"
+    )
 
 GOVDATA_URL = (
     "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
-    "?api-key=579b464db66ec23bdd000001548d39482160445a55f6a76120fa3454"
+    f"?api-key={_GOVDATA_API_KEY}"
     "&format=json&limit=10"
 )
 

@@ -26,8 +26,8 @@ def get_gdelt_score() -> float:
         count = len(data.get("articles", []))
 
         if count == 0:
-            print("Crisis Events Found: 0")
-            print("Note: Score 5.0 means API timed out, fallback value used.\n")
+            print("Crisis Events Found: 0  ->  No articles returned by GDELT.")
+            print("GDELT Risk Score: 5.0  (No data — default score applied)\n")
             return 5.0
 
         score = min(count * 1.5, 10.0)
