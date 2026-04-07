@@ -16,22 +16,37 @@ _root_services = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "
 if _root_services not in sys.path:
     sys.path.append(_root_services)  # append so server/services/ keeps priority
 
-def _filter_articles(articles: List[Dict]) -> List[Dict]:
+def _annotate_and_filter_articles(articles: List[Dict]) -> List[Dict]:
     """
-    Remove likely fake/unreliable articles using the BERT fake news classifier.
-    Falls back to returning all articles if the model is unavailable.
+    Run BERT fake news classifier on each article title.
+    Adds bert_confidence (0-1) and bert_label ('REAL'/'FAKE') to each article.
+    Filters out fakes, but keeps all articles (with scores) if all would be removed.
+    Falls back to original articles if model is unavailable.
     """
     try:
-        from fake_news_filter import filter_headlines
-        titles = [a.get("title", "") for a in articles if a.get("title")]
-        if not titles:
-            return articles
-        verified_titles = set(filter_headlines(titles))
-        filtered = [a for a in articles if a.get("title", "") in verified_titles]
+        from fake_news_filter import load_model, REAL_THRESHOLD
+        classifier = load_model()
+
+        annotated = []
+        for article in articles:
+            title = article.get("title", "")
+            if not title:
+                annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": True})
+                continue
+            result = classifier(title)[0]
+            label = result["label"]
+            score = result["score"]
+            is_real = label == "LABEL_1"
+            confidence = round(score if is_real else 1 - score, 4)
+            bert_label = "REAL" if is_real else "FAKE"
+            bert_verified = is_real and confidence >= REAL_THRESHOLD
+            annotated.append({**article, "bert_confidence": confidence, "bert_label": bert_label, "bert_verified": bert_verified})
+
+        filtered = [a for a in annotated if a.get("bert_verified", True)]
         if not filtered:
-            logger.warning("Fake news filter removed all articles — using originals")
-            return articles
-        logger.info("Fake news filter: %d/%d articles passed", len(filtered), len(articles))
+            logger.warning("BERT filtered all articles — keeping all with scores")
+            return annotated  # return all annotated but unfiltered
+        logger.info("BERT filter: %d/%d articles verified as real", len(filtered), len(annotated))
         return filtered
     except Exception as exc:
         logger.warning("Fake news filter unavailable: %s — using all articles", exc)
@@ -235,7 +250,7 @@ def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, float]:
         "keyword_score": float
     }
     """
-    articles = _filter_articles(articles)
+    articles = _annotate_and_filter_articles(articles)
     analyses = [analyze_article(a) for a in articles]
     return _build_contract_metrics(analyses)
 
@@ -253,8 +268,12 @@ def analyze_batch_detailed(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         avg_severity: mean combined_severity across all articles
         timestamp: ISO-format UTC time of analysis
     """
-    articles = _filter_articles(articles)
-    analyses = [analyze_article(a) for a in articles]
+    articles = _annotate_and_filter_articles(articles)
+    # Merge bert fields into each analysis result
+    analyses = [
+        {**analyze_article(a), "bert_confidence": a.get("bert_confidence"), "bert_label": a.get("bert_label")}
+        for a in articles
+    ]
 
     # Initialise service aggregation
     service_data: Dict[str, Dict] = {

@@ -10,16 +10,24 @@ const SERVICE_COLORS = {
   logistics: '#6366F1',
 }
 
-function SentimentBar({ value }) {
-  // value: -1 to 1 (negative = bad, positive = good)
-  const pct = ((value + 1) / 2) * 100
-  const color = value < -0.3 ? '#EF4444' : value > 0.3 ? '#10B981' : '#F59E0B'
+function BertAccuracyBar({ confidence, label }) {
+  // confidence: 0-1 from BERT model, label: 'REAL' | 'FAKE' | null
+  if (confidence == null) {
+    return <span className="text-[10px] text-text-muted font-mono">—</span>
+  }
+  const pct = confidence * 100
+  const isReal = label === 'REAL'
+  const color = isReal
+    ? confidence >= 0.9 ? '#10B981' : '#F59E0B'
+    : '#EF4444'
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
-      <span className="text-[10px] font-mono" style={{ color }}>{value.toFixed(2)}</span>
+      <span className="text-[10px] font-mono leading-none" style={{ color }}>
+        {pct.toFixed(0)}%
+      </span>
     </div>
   )
 }
@@ -33,10 +41,7 @@ export default function NLPInsights() {
     fetchSignals().then(d => { if (d) setSignals(d) }).catch(() => {})
   }, [])
 
-  const enrichedEvents = events.map(e => ({
-    ...e,
-    sentiment: Number.isFinite(Number(e.combined_severity)) ? -(Number(e.combined_severity) * 2 - 1) : 0,
-  }))
+  const enrichedEvents = events
 
   return (
     <div className="space-y-4">
@@ -74,7 +79,7 @@ export default function NLPInsights() {
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Time</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Source</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Headline</th>
-                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">Sentiment</th>
+                <th className="text-left px-4 py-2.5 text-text-muted font-normal w-28">BERT Accuracy</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Severity</th>
                 <th className="text-left px-4 py-2.5 text-text-muted font-normal">Services</th>
               </tr>
@@ -90,7 +95,7 @@ export default function NLPInsights() {
                     {truncate(e.title, 60)}
                   </td>
                   <td className="px-4 py-2.5 w-28">
-                    <SentimentBar value={e.sentiment} />
+                    <BertAccuracyBar confidence={e.bert_confidence} label={e.bert_label} />
                   </td>
                   <td className="px-4 py-2.5">
                     <StatusBadge severity={e.severity} />
