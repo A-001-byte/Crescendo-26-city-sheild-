@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Search, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useCrisis } from '../../context/CrisisContext'
 
 const HISTORY = [
   { id: 'h1', severity: 'high', ward: 'Katraj', service: 'fuel', message: 'test' },
@@ -45,11 +46,27 @@ function MinimalAlertCard({ a, index }) {
 }
 
 export default function AlertHistory() {
+  const { alerts } = useCrisis()
   const [search, setSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('all')
   const [serviceFilter, setServiceFilter] = useState('all')
 
-  const filtered = HISTORY.filter(a => {
+  const items = useMemo(() => {
+    const source = alerts?.length ? alerts : HISTORY
+    return source.map((a, index) => {
+      const severity = (a.severity || a.level || 'low').toLowerCase()
+      const normalizedSeverity = ['high', 'moderate', 'low'].includes(severity) ? severity : 'low'
+      return {
+        id: a.id || `h-${index}`,
+        severity: normalizedSeverity,
+        ward: a.ward || a.area || 'All Wards',
+        service: a.service || a.category || 'fuel',
+        message: a.message || '',
+      }
+    })
+  }, [alerts])
+
+  const filtered = items.filter(a => {
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false
     if (serviceFilter !== 'all' && a.service !== serviceFilter) return false
     if (search && !a.ward.toLowerCase().includes(search.toLowerCase())) return false

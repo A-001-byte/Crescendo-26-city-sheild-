@@ -21,7 +21,22 @@ const MOCK_NEWS = [
   }
 ]
 
-export default function NewsFeed() {
+export default function NewsFeed({ alertBannerText, primaryRiskCategory, recommendationText }) {
+  const feedItems = [...MOCK_NEWS]
+
+  if (alertBannerText) {
+    feedItems[0] = { ...feedItems[0], title: alertBannerText }
+  }
+
+  if (primaryRiskCategory) {
+    const label = String(primaryRiskCategory).charAt(0).toUpperCase() + String(primaryRiskCategory).slice(1)
+    feedItems[1] = { ...feedItems[1], title: `Primary Risk: ${label}` }
+  }
+
+  if (recommendationText) {
+    feedItems[2] = { ...feedItems[2], title: recommendationText }
+  }
+
   return (
     <div
       className="flex flex-col h-full rounded-2xl overflow-hidden"
@@ -36,17 +51,17 @@ export default function NewsFeed() {
           className="text-[10px] font-mono px-2 py-0.5 rounded-full"
           style={{ background: '#EFF6FF', color: '#3B82F6' }}
         >
-          {MOCK_NEWS.length} updates
+          {feedItems.length} updates
         </span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
-        {MOCK_NEWS.map((news, idx) => (
+          {feedItems.map((news, idx) => (
           <div
             key={news.id}
             onClick={() => window.open('#', '_blank')}
             className={`flex flex-row items-center cursor-pointer transition-colors hover:bg-blue-50 py-3 ${
-              idx !== MOCK_NEWS.length - 1 ? 'border-b border-[#E5E7EB]' : ''
+                idx !== feedItems.length - 1 ? 'border-b border-[#E5E7EB]' : ''
             }`}
           >
             <img 

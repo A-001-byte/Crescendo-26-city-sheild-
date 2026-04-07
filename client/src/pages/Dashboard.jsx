@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react'
 import { useCrisis } from '../context/CrisisContext'
 import CityRiskGauge from '../components/dashboard/CityRiskGauge'
 import ServiceCards from '../components/dashboard/ServiceCards'
@@ -7,6 +8,7 @@ import CityMap from '../components/map/CityMap'
 import AnimatedCounter from '../components/common/AnimatedCounter'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { getRiskColor } from '../utils/riskCalculations'
+import { getCityRisk } from '../api/riskApi'
 import { Shield, Radio, BarChart2, Clock } from 'lucide-react'
 
 const STAT_CARDS = [
@@ -18,8 +20,84 @@ const STAT_CARDS = [
 
 export default function Dashboard() {
   const { score, services, loading, lastUpdated } = useCrisis()
+  const [cityRiskData, setCityRiskData] = useState(null)
+  const [cityRiskLoading, setCityRiskLoading] = useState(true)
 
-  if (loading) {
+  useEffect(() => {
+    let mounted = true
+
+    const loadCityRisk = async () => {
+      try {
+        const data = await getCityRisk()
+        if (mounted && data) {
+          setCityRiskData(data?.data ?? data)
+        }
+      } catch {
+        // Keep existing context-driven mock/live fallback when API is unavailable.
+      } finally {
+        if (mounted) setCityRiskLoading(false)
+      }
+    }
+
+    loadCityRisk()
+    return () => { mounted = false }
+  }, [])
+
+  const normalizedScores = useMemo(() => {
+    if (!cityRiskData) return null
+    return cityRiskData.scores || cityRiskData.services || cityRiskData
+  }, [cityRiskData])
+
+  const apiFuel = Number(normalizedScores?.fuel)
+  const apiFood = Number(normalizedScores?.food)
+  const apiTransport = Number(normalizedScores?.transport)
+  const apiPower = Number(normalizedScores?.power)
+
+  const primaryRiskCategory =
+    cityRiskData?.primary_risk?.category ||
+    [
+      { key: 'fuel', value: Number.isFinite(apiFuel) ? apiFuel : -Infinity },
+      { key: 'food', value: Number.isFinite(apiFood) ? apiFood : -Infinity },
+      { key: 'transport', value: Number.isFinite(apiTransport) ? apiTransport : -Infinity },
+      { key: 'power', value: Number.isFinite(apiPower) ? apiPower : -Infinity },
+    ].sort((a, b) => b.value - a.value)[0]?.key
+
+  const recommendationText =
+    cityRiskData?.recommendation ||
+    (primaryRiskCategory
+      ? `Primary risk is ${primaryRiskCategory}. Prioritize contingency actions for this service.`
+      : undefined)
+
+  const alertBannerText = cityRiskData?.alerts?.[0] ||
+    (primaryRiskCategory
+      ? `Alert: ${primaryRiskCategory} risk is currently the most elevated.`
+      : undefined)
+
+  const resolvedScore = Number.isFinite(Number(cityRiskData?.score))
+    ? Number(cityRiskData.score)
+    : score
+
+  const resolvedServices = {
+    ...services,
+    fuel: {
+      ...(services?.fuel || {}),
+      score: Number.isFinite(apiFuel) ? apiFuel : services?.fuel?.score,
+    },
+    food: {
+      ...(services?.food || {}),
+      score: Number.isFinite(apiFood) ? apiFood : services?.food?.score,
+    },
+    logistics: {
+      ...(services?.logistics || {}),
+      score: Number.isFinite(apiTransport) ? apiTransport : services?.logistics?.score,
+    },
+    power: {
+      ...(services?.power || {}),
+      score: Number.isFinite(apiPower) ? apiPower : services?.power?.score,
+    },
+  }
+
+  if (loading || cityRiskLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <LoadingSpinner size="lg" />
@@ -63,12 +141,12 @@ export default function Dashboard() {
             )}
           </div>
           <div className="flex-1 min-h-[200px]">
-            <CityRiskGauge score={score} />
+            <CityRiskGauge score={resolvedScore} />
           </div>
         </div>
 
         <div className="col-span-1 lg:col-span-8 bg-white rounded-xl shadow-md p-4 relative z-0">
-          <ServiceCards data={services} />
+          <ServiceCards data={resolvedServices} />
         </div>
       </div>
 
@@ -78,7 +156,11 @@ export default function Dashboard() {
           <RiskTimeline />
         </div>
         <div className="col-span-1 lg:col-span-4 relative z-0 flex flex-col">
-          <NewsFeed />
+          <NewsFeed
+            alertBannerText={alertBannerText}
+            primaryRiskCategory={primaryRiskCategory}
+            recommendationText={recommendationText}
+          />
         </div>
       </div>
 

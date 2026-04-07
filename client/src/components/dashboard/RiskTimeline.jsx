@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartTooltip,
   ResponsiveContainer, ReferenceLine, ReferenceArea, Legend
 } from 'recharts'
+import { fetchScoreHistory } from '../../utils/api'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -40,7 +42,62 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
+function toScore(value, fallback) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function normalizeHistory(raw) {
+  if (!Array.isArray(raw) || !raw.length) return DATA
+
+  const parsed = raw.map((entry, idx) => {
+    const services = entry?.services || entry?.scores || {}
+    const day =
+      entry?.day ||
+      entry?.label ||
+      (entry?.timestamp || entry?.date
+        ? new Date(entry.timestamp || entry.date).toLocaleDateString('en-US', { weekday: 'short' })
+        : DAYS[idx % DAYS.length])
+
+    return {
+      day,
+      fuel: toScore(entry?.fuel ?? services?.fuel?.score ?? services?.fuel, DATA[idx % DATA.length].fuel),
+      power: toScore(entry?.power ?? services?.power?.score ?? services?.power, DATA[idx % DATA.length].power),
+      food: toScore(entry?.food ?? services?.food?.score ?? services?.food, DATA[idx % DATA.length].food),
+      logistics: toScore(
+        entry?.logistics ??
+        entry?.transport ??
+        services?.logistics?.score ??
+        services?.logistics ??
+        services?.transport?.score ??
+        services?.transport,
+        DATA[idx % DATA.length].logistics
+      ),
+    }
+  })
+
+  return parsed.slice(-7)
+}
+
 export default function RiskTimeline() {
+  const [chartData, setChartData] = useState(DATA)
+
+  useEffect(() => {
+    let mounted = true
+
+    fetchScoreHistory(7)
+      .then((res) => {
+        if (!mounted) return
+        setChartData(normalizeHistory(res))
+      })
+      .catch(() => {
+        if (!mounted) return
+        setChartData(DATA)
+      })
+
+    return () => { mounted = false }
+  }, [])
+
   return (
     <div className="rounded-2xl p-4 shadow-lg h-full flex flex-col" style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}>
       <div className="flex items-center justify-between mb-4">
@@ -56,7 +113,7 @@ export default function RiskTimeline() {
       </div>
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={DATA} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
             <defs>
               {SERVICES.map(s => (
                 <linearGradient key={s.key} id={`tg-${s.key}`} x1="0" y1="0" x2="0" y2="1">
