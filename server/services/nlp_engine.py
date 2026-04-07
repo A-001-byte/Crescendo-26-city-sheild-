@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _root_services = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "services"))
 if _root_services not in sys.path:
-    sys.path.insert(0, _root_services)
+    sys.path.append(_root_services)  # append so server/services/ keeps priority
 
 def _filter_articles(articles: List[Dict]) -> List[Dict]:
     """
