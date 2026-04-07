@@ -4,7 +4,7 @@ import { getRiskColor, getRiskLabel, scoreToAngle } from '../../utils/riskCalcul
 const RADIUS = 90
 const CENTER_X = 150
 const CENTER_Y = 160
-const STROKE_WIDTH = 18
+const STROKE_WIDTH = 22
 const START_ANGLE_DEG = 210
 const SWEEP_DEG = 240
 
@@ -55,7 +55,6 @@ export default function CityRiskGauge({ score = 6.4 }) {
 
   const color = getRiskColor(animatedScore)
   const label = getRiskLabel(score)
-  const isCritical = score >= 7
 
   const totalArcLen = getArcLength(RADIUS, SWEEP_DEG)
   const fillRatio = scoreToAngle(animatedScore) / SWEEP_DEG
@@ -67,42 +66,15 @@ export default function CityRiskGauge({ score = 6.4 }) {
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
-      <div className={`relative ${isCritical ? 'risk-pulse rounded-full' : ''}`}>
+      <div className="relative">
         <svg viewBox="0 0 300 210" width="100%" style={{ maxWidth: 280, display: 'block' }}>
-          {/* Glow filter */}
-          <defs>
-            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="10" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Background glow circle */}
-          <circle
-            cx={CENTER_X}
-            cy={CENTER_Y}
-            r={RADIUS - 10}
-            fill={color}
-            opacity={0.04}
-            filter="url(#softGlow)"
-          />
-
           {/* Track */}
           <path
             d={bgPath}
             fill="none"
-            stroke="#E2E8F0"
+            stroke="#D1D5DB"
             strokeWidth={STROKE_WIDTH}
-            strokeLinecap="round"
+            strokeLinecap="butt"
           />
 
           {/* Fill arc */}
@@ -111,9 +83,8 @@ export default function CityRiskGauge({ score = 6.4 }) {
             fill="none"
             stroke={color}
             strokeWidth={STROKE_WIDTH}
-            strokeLinecap="round"
+            strokeLinecap="butt"
             strokeDasharray={`${fillLen} ${gapLen + 1}`}
-            filter="url(#glow)"
             style={{ transition: 'stroke 0.5s' }}
           />
 

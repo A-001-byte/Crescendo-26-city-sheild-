@@ -1,13 +1,8 @@
 import random
 import json
-import os
-import logging
-from datetime import datetime, timedelta
 
 # Mock functions as per the user's context description
 # In a real scenario, these would be imported from their respective modules.
-
-logger = logging.getLogger(__name__)
 
 def get_nlp_signals():
     """

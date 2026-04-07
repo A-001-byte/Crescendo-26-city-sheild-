@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { CircleMarker, Marker, useMap } from 'react-leaflet'
+import { Marker, Rectangle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.heat'
 
@@ -27,66 +27,66 @@ const FUEL_STATIONS = [
 ]
 
 const HOSPITALS = [
-  { name: 'Ruby Hall Clinic', lat: 18.534, lng: 73.888, priorityLevel: 1, fuelBuffer: 72, riskLevel: 'Low' },
-  { name: 'Sahyadri Hospital', lat: 18.519, lng: 73.851, priorityLevel: 1, fuelBuffer: 48, riskLevel: 'Moderate' },
-  { name: 'Deenanath Mangeshkar', lat: 18.514, lng: 73.826, priorityLevel: 1, fuelBuffer: 60, riskLevel: 'Low' },
-  { name: 'KEM Hospital', lat: 18.512, lng: 73.858, priorityLevel: 2, fuelBuffer: 36, riskLevel: 'Moderate' },
-  { name: 'Jehangir Hospital', lat: 18.531, lng: 73.882, priorityLevel: 1, fuelBuffer: 54, riskLevel: 'Low' },
-  { name: 'Sancheti Hospital', lat: 18.527, lng: 73.857, priorityLevel: 2, fuelBuffer: 42, riskLevel: 'Low' },
-  { name: 'Poona Hospital', lat: 18.505, lng: 73.870, priorityLevel: 2, fuelBuffer: 30, riskLevel: 'High' },
-  { name: 'Aditya Birla', lat: 18.556, lng: 73.812, priorityLevel: 1, fuelBuffer: 66, riskLevel: 'Low' },
-  { name: 'Noble Hospital', lat: 18.496, lng: 73.883, priorityLevel: 2, fuelBuffer: 28, riskLevel: 'High' },
-  { name: 'Columbia Asia', lat: 18.561, lng: 73.798, priorityLevel: 1, fuelBuffer: 72, riskLevel: 'Low' },
-  { name: 'Inamdar Hospital', lat: 18.503, lng: 73.928, priorityLevel: 2, fuelBuffer: 38, riskLevel: 'Moderate' },
-  { name: 'Pimpri Civil Hospital', lat: 18.618, lng: 73.808, priorityLevel: 2, fuelBuffer: 24, riskLevel: 'Critical' },
+  { name: 'Ruby Hall Clinic', lat: 18.534, lng: 73.888, priorityLevel: 1, fuelBuffer: 120, riskLevel: 'Low' },
+  { name: 'Sahyadri Hospital', lat: 18.519, lng: 73.851, priorityLevel: 1, fuelBuffer: 80, riskLevel: 'Moderate' },
+  { name: 'Deenanath Mangeshkar', lat: 18.514, lng: 73.826, priorityLevel: 1, fuelBuffer: 95, riskLevel: 'Low' },
+  { name: 'KEM Hospital', lat: 18.512, lng: 73.858, priorityLevel: 2, fuelBuffer: 70, riskLevel: 'Moderate' },
+  { name: 'Jehangir Hospital', lat: 18.531, lng: 73.882, priorityLevel: 1, fuelBuffer: 110, riskLevel: 'Low' },
+  { name: 'Sancheti Hospital', lat: 18.527, lng: 73.857, priorityLevel: 2, fuelBuffer: 88, riskLevel: 'Low' },
+  { name: 'Poona Hospital', lat: 18.505, lng: 73.870, priorityLevel: 2, fuelBuffer: 52, riskLevel: 'High' },
+  { name: 'Aditya Birla', lat: 18.556, lng: 73.812, priorityLevel: 1, fuelBuffer: 130, riskLevel: 'Low' },
+  { name: 'Noble Hospital', lat: 18.496, lng: 73.883, priorityLevel: 2, fuelBuffer: 48, riskLevel: 'High' },
+  { name: 'Columbia Asia', lat: 18.561, lng: 73.798, priorityLevel: 1, fuelBuffer: 125, riskLevel: 'Low' },
+  { name: 'Inamdar Hospital', lat: 18.503, lng: 73.928, priorityLevel: 2, fuelBuffer: 60, riskLevel: 'Moderate' },
+  { name: 'Pimpri Civil Hospital', lat: 18.618, lng: 73.808, priorityLevel: 2, fuelBuffer: 35, riskLevel: 'High' },
 ]
 
-// Intensity based on fuel criticality: lower buffer = higher heat
-const fuelStatusIntensity = (status) => {
-  if (status === 'critical') return 1.0
-  if (status === 'low') return 0.55
-  return 0.15
+const fuelStatusColor = (status) => {
+  if (status === 'critical') return '#DC2626'
+  if (status === 'low') return '#EAB308'
+  return '#16A34A'
 }
 
-// Leaflet.heat layer component (renders directly into the map)
 function FuelHeatLayer() {
-  const map = useMap()
-  const heatRef = useRef(null)
+  return (
+    <>
+      {FUEL_STATIONS.map((s, i) => {
+        const color = fuelStatusColor(s.status)
+        const availability = Math.max(5, Math.min(100, Math.round((s.bufferHours / 72) * 100)))
+        const bounds = [
+          [s.lat - 0.0045, s.lng - 0.0045],
+          [s.lat + 0.0045, s.lng + 0.0045],
+        ]
 
-  useEffect(() => {
-    const points = FUEL_STATIONS.map(s => [
-      s.lat,
-      s.lng,
-      fuelStatusIntensity(s.status),
-    ])
-
-    heatRef.current = L.heatLayer(points, {
-      radius: 35,
-      blur: 25,
-      maxZoom: 17,
-      gradient: {
-        0.0: 'transparent',
-        0.3: 'rgba(251,146,60,0.6)',   // orange — low risk
-        0.6: 'rgba(239,68,68,0.8)',    // red — high risk
-        1.0: '#7F1D1D',               // dark red — critical
-      },
-    })
-    heatRef.current.addTo(map)
-
-    return () => {
-      if (heatRef.current) {
-        map.removeLayer(heatRef.current)
-      }
-    }
-  }, [map])
-
-  return null
+        return (
+          <Rectangle
+            key={`${s.name}-${i}`}
+            bounds={bounds}
+            pathOptions={{
+              color,
+              fillColor: color,
+              fillOpacity: 0.55,
+              weight: 1,
+            }}
+            eventHandlers={{
+              mouseover: (e) => {
+                e.target.bindTooltip(
+                  `${s.name} — Fuel Available: ${availability}%`,
+                  { sticky: true, className: 'leaflet-tooltip-dark' }
+                ).openTooltip()
+              },
+            }}
+          />
+        )
+      })}
+    </>
+  )
 }
 
 function createHospitalIcon(priority, riskLevel) {
-  const bg = priority === 1 ? '#1D4ED8' : '#0369A1'
+  const bg = riskLevel === 'High' ? '#DC2626' : riskLevel === 'Moderate' ? '#EAB308' : '#16A34A'
   return L.divIcon({
-    html: `<div style="width:26px;height:26px;background:${bg};border:2.5px solid #93C5FD;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:bold;font-family:sans-serif;box-shadow:0 2px 8px rgba(59,130,246,0.4)">H</div>`,
+    html: `<div style="width:24px;height:24px;background:${bg};border:2px solid #111827;display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:14px;font-weight:bold;font-family:sans-serif">+</div>`,
     iconSize: [26, 26],
     iconAnchor: [13, 13],
     className: '',
@@ -101,7 +101,7 @@ function HospitalTooltipMarker({ h }) {
       <div style="font-size:11px;color:#475569;margin-bottom:2px">Risk: <strong style="color:${
         h.riskLevel === 'Low' ? '#10B981' : h.riskLevel === 'Moderate' ? '#F59E0B' : h.riskLevel === 'High' ? '#EF4444' : '#7F1D1D'
       }">${h.riskLevel}</strong></div>
-      <div style="font-size:11px;color:#475569">Fuel Buffer: <strong>${h.fuelBuffer}h</strong></div>
+      <div style="font-size:11px;color:#475569">Capacity Available: <strong>${h.fuelBuffer}</strong></div>
     </div>
   `
 
@@ -142,17 +142,16 @@ export default function HeatmapOverlay({ activeLayer }) {
       <>
         {HOSPITALS.map((h, i) => {
           const riskColor =
-            h.riskLevel === 'Low' ? '#10B981'
-            : h.riskLevel === 'Moderate' ? '#F59E0B'
-            : h.riskLevel === 'High' ? '#EF4444'
-            : '#7F1D1D'
+            h.riskLevel === 'Low' ? '#16A34A'
+            : h.riskLevel === 'Moderate' ? '#EAB308'
+            : '#DC2626'
 
           const tooltipHtml = `
             <div style="font-family:sans-serif;min-width:160px">
               <div style="font-weight:700;font-size:13px;color:#0F172A;margin-bottom:4px">${h.name}</div>
               <div style="font-size:11px;color:#475569;margin-bottom:2px">Priority Level <strong>${h.priorityLevel}</strong></div>
               <div style="font-size:11px;margin-bottom:2px">Risk: <strong style="color:${riskColor}">${h.riskLevel}</strong></div>
-              <div style="font-size:11px;color:#475569">⛽ Fuel Buffer: <strong>${h.fuelBuffer}h</strong></div>
+              <div style="font-size:11px;color:#475569">Capacity Available: <strong>${h.fuelBuffer}</strong></div>
             </div>
           `
 
