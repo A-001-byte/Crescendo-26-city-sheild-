@@ -109,27 +109,36 @@ def generate_recommendation(primary_risk_category: str) -> str:
         return "Monitor all systems and maintain standard operational procedures."
 
 def _parse_nlp_inputs(nlp_signals):
-    """Extract sentiment and keyword score from NLP payload."""
+    """
+    Extract sentiment and keyword score from NLP payload.
+
+    Handles two input shapes:
+      - Root-level pipeline:  {"sentiment": float, "keyword_score": float, ...}
+      - server analyze_batch: {"avg_severity": float, "service_signals": {...}, ...}
+    """
     sentiment = None
     keyword_score = None
 
     if not isinstance(nlp_signals, dict):
         return sentiment, keyword_score
 
+    # --- sentiment ---
     try:
-        raw_sentiment = nlp_signals.get("sentiment")
-        if raw_sentiment is not None:
-            sentiment = float(raw_sentiment)
+        if nlp_signals.get("sentiment") is not None:
+            sentiment = float(nlp_signals["sentiment"])
+        elif nlp_signals.get("avg_severity") is not None:
+            # avg_severity is 0–1 (higher = more alarming); map to negative sentiment
+            sentiment = -(float(nlp_signals["avg_severity"]))
     except (TypeError, ValueError):
         sentiment = None
 
+    # --- keyword_score ---
     try:
-        raw_keyword = nlp_signals.get("keyword_score")
-        raw_avg_severity = nlp_signals.get("avg_severity")
-        if raw_keyword is not None:
-            keyword_score = float(raw_keyword)
-        elif raw_avg_severity is not None:
-            keyword_score = float(raw_avg_severity)
+        if nlp_signals.get("keyword_score") is not None:
+            keyword_score = float(nlp_signals["keyword_score"])
+        elif nlp_signals.get("avg_severity") is not None:
+            # scale 0–1 severity to a keyword-equivalent score 0–10
+            keyword_score = float(nlp_signals["avg_severity"]) * 10.0
     except (TypeError, ValueError):
         keyword_score = None
 
