@@ -7,16 +7,6 @@ import { fetchScoreHistory } from '../../utils/api'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-const DATA = [
-  { day: 'Mon', fuel: 5.8, power: 3.9, food: 4.8, logistics: 5.5 },
-  { day: 'Tue', fuel: 6.1, power: 4.1, food: 5.0, logistics: 5.7 },
-  { day: 'Wed', fuel: 6.5, power: 4.4, food: 5.2, logistics: 5.9 },
-  { day: 'Thu', fuel: 6.9, power: 4.2, food: 5.5, logistics: 6.1 },
-  { day: 'Fri', fuel: 7.1, power: 4.3, food: 5.8, logistics: 6.2 },
-  { day: 'Sat', fuel: 7.3, power: 4.6, food: 5.6, logistics: 6.4 },
-  { day: 'Sun', fuel: 7.1, power: 4.3, food: 5.8, logistics: 6.2 },
-]
-
 const SERVICES = [
   { key: 'fuel', color: '#DC2626', label: 'Fuel' },
   { key: 'power', color: '#EAB308', label: 'Power' },
@@ -48,7 +38,7 @@ function toScore(value, fallback) {
 }
 
 function normalizeHistory(raw) {
-  if (!Array.isArray(raw) || !raw.length) return DATA
+  if (!Array.isArray(raw) || !raw.length) return []
 
   const parsed = raw.map((entry, idx) => {
     const services = entry?.services || entry?.scores || {}
@@ -61,9 +51,9 @@ function normalizeHistory(raw) {
 
     return {
       day,
-      fuel: toScore(entry?.fuel ?? services?.fuel?.score ?? services?.fuel, DATA[idx % DATA.length].fuel),
-      power: toScore(entry?.power ?? services?.power?.score ?? services?.power, DATA[idx % DATA.length].power),
-      food: toScore(entry?.food ?? services?.food?.score ?? services?.food, DATA[idx % DATA.length].food),
+      fuel: toScore(entry?.fuel ?? services?.fuel?.score ?? services?.fuel, 0),
+      power: toScore(entry?.power ?? services?.power?.score ?? services?.power, 0),
+      food: toScore(entry?.food ?? services?.food?.score ?? services?.food, 0),
       logistics: toScore(
         entry?.logistics ??
         entry?.transport ??
@@ -71,7 +61,7 @@ function normalizeHistory(raw) {
         services?.logistics ??
         services?.transport?.score ??
         services?.transport,
-        DATA[idx % DATA.length].logistics
+        0
       ),
     }
   })
@@ -80,7 +70,7 @@ function normalizeHistory(raw) {
 }
 
 export default function RiskTimeline() {
-  const [chartData, setChartData] = useState(DATA)
+  const [chartData, setChartData] = useState([])
 
   useEffect(() => {
     let mounted = true
@@ -92,7 +82,7 @@ export default function RiskTimeline() {
       })
       .catch(() => {
         if (!mounted) return
-        setChartData(DATA)
+        setChartData([])
       })
 
     return () => { mounted = false }

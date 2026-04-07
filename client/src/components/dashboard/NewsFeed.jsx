@@ -1,28 +1,26 @@
 import React from 'react'
-
-const MOCK_NEWS = [
-  {
-    id: 1,
-    title: "Noida Expressway becoming NCR's new luxury belt",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=100&h=100&q=80",
-    time: "Apr 07, 2026 13:43 IST"
-  },
-  {
-    id: 2,
-    title: "Smart city initiatives push tech integration forward",
-    image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=100&h=100&q=80",
-    time: "Apr 07, 2026 12:15 IST"
-  },
-  {
-    id: 3,
-    title: "Traffic patterns indicate a shift towards public transport",
-    image: "https://images.unsplash.com/photo-1558237255-ed19a27c7d4a?auto=format&fit=crop&w=100&h=100&q=80",
-    time: "Apr 07, 2026 10:05 IST"
-  }
-]
+import { useCrisis } from '../../context/CrisisContext'
 
 export default function NewsFeed({ alertBannerText, primaryRiskCategory, recommendationText }) {
-  const feedItems = [...MOCK_NEWS]
+  const { events } = useCrisis()
+
+  const feedItems = (events || []).slice(0, 3).map((event, idx) => ({
+    id: event.id || `event-${idx}`,
+    title: event.title || event.summary || 'Live event update',
+    source: event.source || 'Live Feed',
+    time: event.published_at ? new Date(event.published_at).toLocaleString('en-IN') : 'Now',
+    url: event.url || null,
+  }))
+
+  while (feedItems.length < 3) {
+    feedItems.push({
+      id: `placeholder-${feedItems.length}`,
+      title: 'Waiting for live updates...',
+      source: 'Live Feed',
+      time: 'Now',
+      url: null,
+    })
+  }
 
   if (alertBannerText) {
     feedItems[0] = { ...feedItems[0], title: alertBannerText }
@@ -59,16 +57,14 @@ export default function NewsFeed({ alertBannerText, primaryRiskCategory, recomme
           {feedItems.map((news, idx) => (
           <div
             key={news.id}
-            onClick={() => window.open('#', '_blank')}
+            onClick={() => news.url && window.open(news.url, '_blank', 'noopener,noreferrer')}
             className={`flex flex-row items-center py-3 ${
                 idx !== feedItems.length - 1 ? 'border-b border-[#E5E7EB]' : ''
             }`}
           >
-            <img 
-              src={news.image} 
-              alt="news thumbnail" 
-              className="w-20 h-20 sm:w-24 sm:h-24 object-cover flex-shrink-0 mr-4"
-            />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 mr-4 bg-slate-100 border border-slate-200 flex items-center justify-center">
+              <span className="text-xs font-mono text-slate-500">{news.source.slice(0, 8)}</span>
+            </div>
             <div className="flex flex-col">
               <span className="text-sm text-gray-500 mb-1">{news.time}</span>
               <span className="font-semibold text-base sm:text-lg text-gray-900 leading-snug">

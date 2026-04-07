@@ -86,8 +86,8 @@ def get_primary_risk(scores: dict) -> dict:
     """
     if not scores:
         return {"category": "None", "value": 0}
-        
-    primary_category = max(scores, key=scores.get)
+
+    primary_category = max(scores, key=lambda category: float(scores.get(category, 0)))
     return {
         "category": primary_category,
         "value": scores[primary_category]
@@ -117,16 +117,19 @@ def _parse_nlp_inputs(nlp_signals):
         return sentiment, keyword_score
 
     try:
-        if nlp_signals.get("sentiment") is not None:
-            sentiment = float(nlp_signals.get("sentiment"))
+        raw_sentiment = nlp_signals.get("sentiment")
+        if raw_sentiment is not None:
+            sentiment = float(raw_sentiment)
     except (TypeError, ValueError):
         sentiment = None
 
     try:
-        if nlp_signals.get("keyword_score") is not None:
-            keyword_score = float(nlp_signals.get("keyword_score"))
-        elif nlp_signals.get("avg_severity") is not None:
-            keyword_score = float(nlp_signals.get("avg_severity"))
+        raw_keyword = nlp_signals.get("keyword_score")
+        raw_avg_severity = nlp_signals.get("avg_severity")
+        if raw_keyword is not None:
+            keyword_score = float(raw_keyword)
+        elif raw_avg_severity is not None:
+            keyword_score = float(raw_avg_severity)
     except (TypeError, ValueError):
         keyword_score = None
 
@@ -139,9 +142,10 @@ def _parse_oil_price(oil_data):
         return None
 
     for key in ("brent_current", "current_price", "price", "wti_current"):
-        if oil_data.get(key) is not None:
+        raw_value = oil_data.get(key)
+        if raw_value is not None:
             try:
-                return float(oil_data.get(key))
+                return float(raw_value)
             except (TypeError, ValueError):
                 continue
 
@@ -187,19 +191,19 @@ def calculate_risk(nlp_signals=None, oil_data=None, use_mock_data=False):
 
     # 4. Define baselines
     price_baseline = 70.0
-    baseline_risk = 3
+    baseline_risk = 2.8
 
     # 5. Compute oil impact
     oil_impact = max(0, (current_price - price_baseline) / price_baseline)
 
-    # 6. Calculate base risk with strengthened sentiment impact
-    base_risk = baseline_risk + (-sentiment * 5) + (keyword_score * 1.2)
+    # 6. Calculate base risk with tuned sentiment/keyword scaling
+    base_risk = baseline_risk + (-sentiment * 3.0) + (keyword_score * 0.55)
 
     # 7. Create category-wise scores
-    fuel = base_risk * 1.2 + (oil_impact * 3.5)
-    transport = base_risk * 1.1 + (oil_impact * 3)
-    food = base_risk * 0.9 + (oil_impact * 2)
-    power = base_risk * 0.8 + (oil_impact * 1.5)
+    fuel = base_risk * 1.0 + (oil_impact * 2.8)
+    transport = base_risk * 0.95 + (oil_impact * 2.4)
+    food = base_risk * 0.9 + (oil_impact * 1.6)
+    power = base_risk * 0.85 + (oil_impact * 1.2)
 
     # 8. Apply minimum floor
     fuel = apply_floor(fuel)
@@ -207,19 +211,24 @@ def calculate_risk(nlp_signals=None, oil_data=None, use_mock_data=False):
     food = apply_floor(food)
     power = apply_floor(power)
 
-    # 9. Normalize all scores
+    # 9. Normalize all service scores (public output)
     normalized_scores = {
         "fuel": normalize_score(fuel),
         "food": normalize_score(food),
         "transport": normalize_score(transport),
         "power": normalize_score(power),
-        "sentiment": sentiment
+    }
+
+    # Keep sentiment internal for downstream intelligence logic.
+    _internal_scores = {
+        **normalized_scores,
+        "sentiment": sentiment,
     }
     
     # 10. Generate intelligence features
     alerts = generate_alerts(normalized_scores)
-    trend = predict_trend(normalized_scores)
-    primary_risk = get_primary_risk(normalized_scores)
+    trend = predict_trend(_internal_scores)
+    primary_risk = get_primary_risk(_internal_scores)
     recommendation = generate_recommendation(primary_risk["category"])
 
     # Print debug values

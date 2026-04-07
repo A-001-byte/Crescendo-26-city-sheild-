@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false, reportAttributeAccessIssue=false
 import logging
 import sys
 import os
@@ -149,24 +150,28 @@ def create_app() -> Flask:
 
 def _build_snapshot() -> dict:
     """Collect current CRS, oil, and signal data for a WebSocket push."""
-    from services.news_fetcher import fetch_crisis_news
-    from services.nlp_engine import analyze_batch
-    from services.oil_tracker import get_oil_prices
-    from services.risk_calculator import calculate_city_risk_score
+    from services import news_fetcher, nlp_engine, oil_tracker, risk_calculator
 
-    articles = fetch_crisis_news()
-    nlp_result = analyze_batch(articles)
-    oil_data = get_oil_prices()
-    crs_result = calculate_city_risk_score(nlp_signals=nlp_result, oil_data=oil_data)
+    articles = news_fetcher.fetch_crisis_news()
+    nlp_detailed = nlp_engine.analyze_batch_detailed(articles)
+    nlp_result = {
+        "sentiment": nlp_detailed["sentiment"],
+        "keyword_score": nlp_detailed["keyword_score"],
+    }
+    oil_data = oil_tracker.get_oil_prices()
+    crs_result = risk_calculator.calculate_city_risk_score(
+        nlp_signals=nlp_result,
+        oil_data=oil_data,
+    )
 
     return {
         "crs": crs_result,
         "oil": oil_data,
         "signals": {
-            "service_signals": nlp_result["service_signals"],
-            "critical_events": nlp_result["critical_events"],
-            "avg_severity": nlp_result["avg_severity"],
-            "timestamp": nlp_result["timestamp"],
+            "service_signals": nlp_detailed["service_signals"],
+            "critical_events": nlp_detailed["critical_events"],
+            "avg_severity": nlp_detailed["avg_severity"],
+            "timestamp": nlp_detailed["timestamp"],
         },
     }
 
@@ -180,10 +185,10 @@ def broadcast_update() -> None:
         logger.info("Scheduled broadcast: fetching fresh data...")
 
         # Invalidate caches to force fresh fetch
-        from services.news_fetcher import invalidate_news_cache
-        from services.oil_tracker import invalidate_oil_cache
-        invalidate_news_cache()
-        invalidate_oil_cache()
+        from services import news_fetcher, oil_tracker
+
+        news_fetcher.invalidate_news_cache()
+        oil_tracker.invalidate_oil_cache()
 
         snapshot = _build_snapshot()
         socketio.emit("update", snapshot)

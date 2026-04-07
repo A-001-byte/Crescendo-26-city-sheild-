@@ -3,36 +3,16 @@ const toNumber = (value) => {
   return Number.isFinite(n) ? n : null
 }
 
-const FORCE_MOCK = String(import.meta.env.VITE_USE_MOCK_RISK || '').toLowerCase() === 'true'
-const MOCK_DELAY_MS = 1500
-
-const MOCK_CITY_DATA = {
-  fuel: 8,
-  food: 6,
-  transport: 7,
-  power: 5,
-  alerts: ['⚠️ Fuel shortage risk high'],
-  primary_risk: { category: 'fuel' },
-  recommendation: 'Avoid unnecessary travel',
-}
-
-const MOCK_WARD_DATA = {
-  Kothrud: { fuel: 8, food: 6, transport: 7, power: 5 },
-  Hinjewadi: { fuel: 5, food: 4, transport: 6, power: 3 },
-  Katraj: { fuel: 9, food: 7, transport: 8, power: 6 },
-  Hadapsar: { fuel: 7, food: 6, transport: 7, power: 5 },
-  Aundh: { fuel: 3, food: 4, transport: 3, power: 2 },
-}
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim()
 
 const unwrap = (payload) => payload?.data ?? payload
 
 const fetchJson = async (url) => {
-  const res = await fetch(url)
+  const resolvedUrl = API_BASE_URL ? `${API_BASE_URL}${url}` : url
+  const res = await fetch(resolvedUrl)
   if (!res.ok) throw new Error(`Request failed: ${res.status}`)
   return res.json()
 }
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const normalizeCityRisk = (payload) => {
   const raw = unwrap(payload) || {}
@@ -164,19 +144,11 @@ const normalizeWardRisk = (payload) => {
 }
 
 export const getCityRisk = async (cityName) => {
-  if (FORCE_MOCK) {
-    await sleep(MOCK_DELAY_MS)
-    return normalizeCityRisk(MOCK_CITY_DATA)
-  }
-
-  try {
-    const query = cityName ? `?city=${encodeURIComponent(cityName)}` : ''
-    const payload = await fetchJson(`/api/crisis/score${query}`)
-    return normalizeCityRisk(payload)
-  } catch {
-    await sleep(MOCK_DELAY_MS)
-    return normalizeCityRisk(MOCK_CITY_DATA)
-  }
+  const query = cityName ? `?city=${encodeURIComponent(cityName)}` : ''
+  const payload = await fetchJson(`/api/risk/city-score${query}`)
+  const data = normalizeCityRisk(payload)
+  console.log(data)
+  return data
 }
 
 export const getWardRisk = async (wardName) => {
@@ -184,16 +156,9 @@ export const getWardRisk = async (wardName) => {
     throw new Error('wardName is required for getWardRisk')
   }
 
-  if (FORCE_MOCK) {
-    await sleep(MOCK_DELAY_MS)
-    return normalizeSingleWardRisk(MOCK_WARD_DATA[wardName] || {}, wardName)
-  }
-
-  try {
-    const payload = await fetchJson(`/api/crisis/score/ward/${encodeURIComponent(wardName)}`)
-    return normalizeSingleWardRisk(payload, wardName)
-  } catch {
-    await sleep(MOCK_DELAY_MS)
-    return normalizeSingleWardRisk(MOCK_WARD_DATA[wardName] || {}, wardName)
-  }
+  const payload = await fetchJson('/api/risk/ward-scores')
+  const wardPayload = unwrap(payload)?.scores?.[wardName] || {}
+  const data = normalizeSingleWardRisk(wardPayload, wardName)
+  console.log(data)
+  return data
 }

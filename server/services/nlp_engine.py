@@ -168,11 +168,55 @@ def analyze_article(article: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_contract_metrics(analyses: List[Dict[str, Any]]) -> Dict[str, float]:
+    """
+    Build the strict NLP -> risk engine contract.
+
+    Returns exactly:
+    {
+        "sentiment": float,      # -1 to +1
+        "keyword_score": float   # 0 to 10
+    }
+    """
+    if not analyses:
+        return {
+            "sentiment": 0.0,
+            "keyword_score": 0.0,
+        }
+
+    avg_sentiment = sum(a.get("vader_compound", 0.0) for a in analyses) / len(analyses)
+    avg_keyword_weight = sum(a.get("keyword_score", 0.0) for a in analyses) / len(analyses)
+
+    sentiment = max(-1.0, min(1.0, avg_sentiment))
+    keyword_score = max(0.0, min(10.0, avg_keyword_weight * 10.0))
+
+    return {
+        "sentiment": round(sentiment, 4),
+        "keyword_score": round(keyword_score, 4),
+    }
+
+
+def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, float]:
+    """
+    Strict risk-engine payload.
+
+    Returns exactly:
+    {
+        "sentiment": float,
+        "keyword_score": float
+    }
+    """
+    analyses = [analyze_article(a) for a in articles]
+    return _build_contract_metrics(analyses)
+
+
+def analyze_batch_detailed(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Analyze a list of articles and aggregate results by service category.
 
     Returns:
+        sentiment: aggregated VADER compound score in [-1, 1]
+        keyword_score: aggregated keyword score in [0, 10]
         service_signals: per-service aggregated metrics
         critical_events: articles with crisis_level == "critical"
         high_events: articles with crisis_level == "high"
@@ -221,7 +265,11 @@ def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
     else:
         avg_severity = 0.0
 
+    contract = _build_contract_metrics(analyses)
+
     return {
+        "sentiment": contract["sentiment"],
+        "keyword_score": contract["keyword_score"],
         "service_signals": service_signals,
         "critical_events": critical_events,
         "high_events": high_events,
@@ -230,3 +278,15 @@ def analyze_batch(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
         "avg_severity": round(avg_severity, 4),
         "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+
+if __name__ == "__main__":
+    sample_articles = [
+        {
+            "title": "OPEC cut triggers fuel concerns in India",
+            "description": "Crude prices rise and supply chain disruption risk grows.",
+            "content": "Analysts warn of shortage and logistics pressure in Pune.",
+        }
+    ]
+    nlp_output = analyze_batch(sample_articles)
+    print(nlp_output)

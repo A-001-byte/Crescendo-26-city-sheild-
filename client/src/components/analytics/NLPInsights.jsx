@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react'
 import { fetchSignals, fetchLatestEvents } from '../../utils/api'
 import { formatRelativeTime, truncate } from '../../utils/formatters'
-import { getSeverityColor } from '../../utils/formatters'
 import StatusBadge from '../common/StatusBadge'
-import sampleEvents from '../../data/sampleEvents.json'
-
-const FALLBACK_SIGNALS = {
-  fuel: 0.73,
-  power: 0.45,
-  food: 0.52,
-  logistics: 0.38,
-}
 
 const SERVICE_COLORS = {
   fuel: '#F97316',
@@ -34,17 +25,17 @@ function SentimentBar({ value }) {
 }
 
 export default function NLPInsights() {
-  const [events, setEvents] = useState(sampleEvents)
-  const [signals, setSignals] = useState(FALLBACK_SIGNALS)
+  const [events, setEvents] = useState([])
+  const [signals, setSignals] = useState({ fuel: 0, power: 0, food: 0, logistics: 0 })
 
   useEffect(() => {
-    fetchLatestEvents(20).then(d => { if (d?.length) setEvents(d) }).catch(() => {})
+    fetchLatestEvents(20).then(d => { if (Array.isArray(d)) setEvents(d) }).catch(() => {})
     fetchSignals().then(d => { if (d) setSignals(d) }).catch(() => {})
   }, [])
 
   const enrichedEvents = events.map(e => ({
     ...e,
-    sentiment: e.combined_severity ? -(e.combined_severity * 2 - 1) : (Math.random() * 2 - 1) * 0.8,
+    sentiment: Number.isFinite(Number(e.combined_severity)) ? -(Number(e.combined_severity) * 2 - 1) : 0,
   }))
 
   return (

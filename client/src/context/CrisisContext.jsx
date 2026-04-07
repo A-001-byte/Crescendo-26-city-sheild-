@@ -1,19 +1,17 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { useRiskScore } from '../hooks/useRiskScore'
 import { useWebSocket } from '../hooks/useWebSocket'
-import { useDemoMode } from '../hooks/useDemoMode'
 import { fetchAlerts, fetchLatestEvents } from '../utils/api'
-import sampleEvents from '../data/sampleEvents.json'
 
 const CrisisContext = createContext(null)
 
-const SAMPLE_ALERTS = [
-  { id: 'a1', severity: 'high', message: 'Fuel buffer critically low in Katraj ward — 22h remaining', ward: 'Katraj', service: 'fuel', created_at: new Date(Date.now() - 8 * 60000).toISOString(), channels: ['sms', 'push'] },
-  { id: 'a2', severity: 'high', message: 'Transport strike disrupting fuel delivery routes — Hadapsar affected', ward: 'Hadapsar', service: 'logistics', created_at: new Date(Date.now() - 25 * 60000).toISOString(), channels: ['sms', 'whatsapp'] },
-  { id: 'a3', severity: 'moderate', message: 'Swargate distribution center operating at 60% capacity', ward: 'Swargate', service: 'food', created_at: new Date(Date.now() - 55 * 60000).toISOString(), channels: ['push'] },
-  { id: 'a4', severity: 'moderate', message: 'Pimpri grid load at 94% — demand management advisory issued', ward: 'Pimpri', service: 'power', created_at: new Date(Date.now() - 2 * 3600000).toISOString(), channels: ['push', 'iccc'] },
-  { id: 'a5', severity: 'low', message: 'IOC Pune terminal delivery scheduled — Kothrud buffer to be replenished', ward: 'Kothrud', service: 'fuel', created_at: new Date(Date.now() - 4 * 3600000).toISOString(), channels: ['iccc'] },
-]
+const severityFromMessage = (message = '') => {
+  const m = String(message).toUpperCase()
+  if (m.includes('CRITICAL')) return 'critical'
+  if (m.includes('WARNING') || m.includes('HIGH')) return 'high'
+  if (m.includes('ALERT') || m.includes('MODERATE')) return 'moderate'
+  return 'low'
+}
 
 export function CrisisProvider({ children }) {
   const {
@@ -30,8 +28,8 @@ export function CrisisProvider({ children }) {
 
   const [score, setScore] = useState(null)
   const [services, setServices] = useState(null)
-  const [alerts, setAlerts] = useState(SAMPLE_ALERTS)
-  const [events, setEvents] = useState(sampleEvents)
+  const [alerts, setAlerts] = useState([])
+  const [events, setEvents] = useState([])
   const [selectedCity, setSelectedCity] = useState('Pune')
   const [demoActive, setDemoActive] = useState(false)
 
@@ -66,6 +64,36 @@ export function CrisisProvider({ children }) {
 
   // WebSocket subscriptions
   useEffect(() => {
+    const unsubSnapshot = subscribe('update', (snapshot) => {
+      const now = new Date().toISOString()
+      const liveAlerts = Array.isArray(snapshot?.crs?.alerts)
+        ? snapshot.crs.alerts.map((msg, idx) => ({
+          id: `ws-alert-${Date.now()}-${idx}`,
+          severity: severityFromMessage(msg),
+          message: msg,
+          ward: 'All Wards',
+          service: snapshot?.crs?.primary_risk?.category || 'fuel',
+          created_at: now,
+        }))
+        : []
+
+      if (liveAlerts.length) {
+        setAlerts((prev) => [...liveAlerts, ...(prev || [])].slice(0, 100))
+      }
+
+      const liveEvents = Array.isArray(snapshot?.signals?.critical_events)
+        ? snapshot.signals.critical_events.map((e, idx) => ({
+          ...e,
+          id: e.id || `ws-event-${Date.now()}-${idx}`,
+          severity: e.severity || e.crisis_level || 'high',
+        }))
+        : []
+
+      if (liveEvents.length) {
+        setEvents((prev) => [...liveEvents, ...(prev || [])].slice(0, 50))
+      }
+    })
+
     const unsubAlert = subscribe('alert_new', (data) => {
       setAlerts((prev) => [{ ...data, created_at: data.created_at || data.timestamp || new Date().toISOString() }, ...prev].slice(0, 100))
     })
@@ -73,19 +101,11 @@ export function CrisisProvider({ children }) {
       setEvents((prev) => [data, ...prev].slice(0, 50))
     })
     return () => {
+      unsubSnapshot?.()
       unsubAlert?.()
       unsubEvent?.()
     }
   }, [subscribe])
-
-  // Demo mode — Ctrl+Shift+D
-  useDemoMode({
-    setScore,
-    setServices,
-    setAlerts,
-    setEvents,
-    setDemoActive,
-  })
 
   const value = {
     score: score ?? liveScore,

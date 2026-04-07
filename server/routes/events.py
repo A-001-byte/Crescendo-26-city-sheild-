@@ -17,10 +17,10 @@ def get_latest_events():
         limit = max(1, min(limit, 50))
 
         from services.news_fetcher import fetch_crisis_news
-        from services.nlp_engine import analyze_batch
+        from services.nlp_engine import analyze_batch_detailed
 
         articles = fetch_crisis_news()
-        result = analyze_batch(articles[:limit])
+        result = analyze_batch_detailed(articles[:limit])
 
         return jsonify({
             "success": True,
@@ -68,10 +68,10 @@ def get_service_signals():
     """
     try:
         from services.news_fetcher import fetch_crisis_news
-        from services.nlp_engine import analyze_batch
+        from services.nlp_engine import analyze_batch_detailed
 
         articles = fetch_crisis_news()
-        result = analyze_batch(articles)
+        result = analyze_batch_detailed(articles)
 
         return jsonify({
             "success": True,
