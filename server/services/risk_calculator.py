@@ -1,5 +1,15 @@
 import random
 import json
+import sys
+import os
+
+_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+_services_dir = os.path.join(_project_root, 'services')
+# Insert project root first so "services.nlp_engine" resolves to the
+# root-level services package, then add services/ so its bare imports
+# (e.g. "from news_fetcher import ...") resolve within that package.
+sys.path.insert(0, _services_dir)
+sys.path.insert(0, _project_root)
 from services.nlp_engine import get_nlp_signals
 
 def get_oil_price():
