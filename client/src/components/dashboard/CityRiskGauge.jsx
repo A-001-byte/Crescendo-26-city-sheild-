@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function CityRiskGauge({ score = 6.4 }) {
+export default function CityRiskGauge({ score }) {
   const [animatedScore, setAnimatedScore] = useState(0)
   const frameRef = useRef(null)
   const startRef = useRef(null)
 
   useEffect(() => {
-    const target = Math.max(1, Math.min(10, score))
+    const numericScore = Number.isFinite(Number(score)) ? Number(score) : null
+    if (numericScore == null) {
+      setAnimatedScore(0)
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      return () => {}
+    }
+
+    const target = Math.max(1, Math.min(10, numericScore))
     const duration = 1500
 
     const animate = (ts) => {
@@ -27,7 +34,7 @@ export default function CityRiskGauge({ score = 6.4 }) {
   }, [score])
 
   // Map 1-10 to angle mapping inside the simplistic half-circle SVG bounding box we adopted
-  // viewBox: 0 0 100 55  (extra 5px height for stroke overflow below the arc baseline)
+  // viewBox: 0 0 100 50
   // Arc starts at 10 50 (left) and ends at 90 50 (right)
   // R = 40, Center = 50, 50
   const normalizedValue = Math.max(0, Math.min(1, (animatedScore - 1) / 9)) // 0 to 1
@@ -48,7 +55,7 @@ export default function CityRiskGauge({ score = 6.4 }) {
       </div>
       <div className="mt-4">
         <span className="text-6xl font-extrabold letter-spacing-tight tracking-tighter text-primary">
-          {animatedScore.toFixed(1)}
+          {Number.isFinite(Number(score)) ? animatedScore.toFixed(1) : 'NA'}
         </span>
       </div>
     </div>

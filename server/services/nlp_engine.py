@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import logging
+import hashlib
 from typing import Dict, List, Any
 from datetime import datetime
 
@@ -18,42 +19,40 @@ if _root_services not in sys.path:
 
 def _annotate_and_filter_articles(articles: List[Dict]) -> List[Dict]:
     """
-    Run BERT fake news classifier on each article title.
+    Run BERT fake news classifier on each article text (title + description + content).
     Adds bert_confidence (0-1) and bert_label ('REAL'/'FAKE') to each article.
-    Filters out fakes, but keeps all articles (with scores) if all would be removed.
     Falls back to original articles if model cannot be loaded.
     """
     try:
-        from fake_news_filter import load_model, REAL_THRESHOLD
-        classifier = load_model()  # fail hard here — if model can't load, skip BERT entirely
+        from fake_news_filter import classify_text, normalize_label_confidence, map_credibility_score, REAL_THRESHOLD
     except Exception as exc:
-        logger.warning("Fake news model unavailable: %s — skipping BERT filter", exc)
+        logger.warning("Fake news model unavailable: %s — skipping BERT", exc)
         return articles
 
     annotated = []
     for article in articles:
-        title = article.get("title", "")
-        if not title:
-            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": True})
+        text = _build_news_text(article)
+        if not text:
+            annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": False})
             continue
+
         try:
-            result = classifier(title)[0]
-            from fake_news_filter import normalize_label_confidence
-            is_real, confidence = normalize_label_confidence(result["label"], result["score"])
-            confidence = round(confidence, 4)
+            result = classify_text(text)
+            is_real, confidence = normalize_label_confidence(result.get("label"), result.get("score", 0.0))
+            mapped_confidence = round(map_credibility_score(is_real, confidence), 4)
             bert_label = "REAL" if is_real else "FAKE"
             bert_verified = is_real and confidence >= REAL_THRESHOLD
-            annotated.append({**article, "bert_confidence": confidence, "bert_label": bert_label, "bert_verified": bert_verified})
+            annotated.append({
+                **article,
+                "bert_confidence": mapped_confidence,
+                "bert_label": bert_label,
+                "bert_verified": bert_verified,
+            })
         except Exception as exc:
-            logger.warning("BERT failed on article '%s': %s — skipping", title[:50], exc)
+            logger.warning("BERT failed on article '%s': %s — skipping", (article.get("title") or "")[:50], exc)
             annotated.append({**article, "bert_confidence": None, "bert_label": None, "bert_verified": False})
 
-    filtered = [a for a in annotated if a.get("bert_verified", True)]
-    if not filtered:
-        logger.warning("BERT filtered all articles — keeping all with scores")
-        return annotated
-    logger.info("BERT filter: %d/%d articles verified as real", len(filtered), len(annotated))
-    return filtered
+    return annotated
 
 # ---------------------------------------------------------------------------
 # Load crisis keyword lexicon
@@ -78,32 +77,52 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
     }
 
 # ---------------------------------------------------------------------------
-# Service keyword mapping
+# Service keyword mapping (loaded from data file)
 # ---------------------------------------------------------------------------
-SERVICE_KEYWORDS: Dict[str, List[str]] = {
-    "fuel": [
-        "oil", "crude", "petrol", "diesel", "lpg", "gas", "opec", "hormuz",
-        "refinery", "pipeline", "brent", "wti", "fuel", "petroleum", "kerosene",
-        "energy", "barrel", "tanker", "drilling", "rig",
-    ],
-    "power": [
-        "electricity", "grid", "coal", "power plant", "outage", "solar", "energy",
-        "blackout", "load shedding", "thermal", "hydroelectric", "nuclear power",
-        "voltage", "substation", "transmission", "distribution",
-    ],
-    "food": [
-        "wheat", "rice", "food", "grain", "crop", "agriculture", "famine",
-        "export ban", "harvest", "fertilizer", "food inflation", "vegetable",
-        "pulse", "sugar", "dairy", "edible oil", "onion", "tomato", "potato",
-        "ration", "buffer stock", "nafed",
-    ],
-    "logistics": [
-        "shipping", "port", "freight", "supply chain", "transport", "road",
-        "railway", "container", "truck", "highway", "border", "customs",
-        "warehouse", "distribution", "cargo", "fleet", "transit", "import",
-        "export", "trade route",
-    ],
-}
+_SERVICE_KEYWORDS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "service_keywords.json")
+
+
+def _load_service_keywords() -> Dict[str, List[str]]:
+    try:
+        with open(_SERVICE_KEYWORDS_PATH, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        if not isinstance(raw, dict):
+            raise ValueError("service_keywords.json must be an object")
+        cleaned: Dict[str, List[str]] = {}
+        for key, values in raw.items():
+            if not isinstance(values, list):
+                continue
+            cleaned[key] = [str(v).lower() for v in values if str(v).strip()]
+        return cleaned
+    except Exception as exc:
+        logger.warning("Could not load service_keywords.json: %s — using defaults", exc)
+        return {
+            "fuel": [
+                "oil", "crude", "petrol", "diesel", "lpg", "gas", "opec", "hormuz",
+                "refinery", "pipeline", "brent", "wti", "fuel", "petroleum", "kerosene",
+                "energy", "barrel", "tanker", "drilling", "rig",
+            ],
+            "power": [
+                "electricity", "grid", "coal", "power plant", "outage", "solar", "energy",
+                "blackout", "load shedding", "thermal", "hydroelectric", "nuclear power",
+                "voltage", "substation", "transmission", "distribution",
+            ],
+            "food": [
+                "wheat", "rice", "food", "grain", "crop", "agriculture", "famine",
+                "export ban", "harvest", "fertilizer", "food inflation", "vegetable",
+                "pulse", "sugar", "dairy", "edible oil", "onion", "tomato", "potato",
+                "ration", "buffer stock", "nafed",
+            ],
+            "logistics": [
+                "shipping", "port", "freight", "supply chain", "transport", "road",
+                "railway", "container", "truck", "highway", "border", "customs",
+                "warehouse", "distribution", "cargo", "fleet", "transit", "import",
+                "export", "trade route",
+            ],
+        }
+
+
+SERVICE_KEYWORDS: Dict[str, List[str]] = _load_service_keywords()
 
 # India-relevant location and entity terms
 INDIA_TERMS = [
@@ -116,6 +135,48 @@ INDIA_TERMS = [
 
 # Initialise VADER once
 _vader = SentimentIntensityAnalyzer()
+
+
+def _build_event_id(article: Dict[str, Any]) -> str:
+    seed = article.get("url") or f"{article.get('title', '')}-{article.get('published_at', '')}"
+    if not seed:
+        seed = json.dumps(article, sort_keys=True)
+    digest = hashlib.sha1(seed.encode("utf-8")).hexdigest()[:12]
+    return f"evt-{digest}"
+
+
+def _build_news_text(article: Dict[str, Any]) -> str:
+    title = article.get("title") or ""
+    description = article.get("description") or ""
+    content = article.get("content") or ""
+
+    if "[+" in content and content.endswith("]"):
+        content = content.split("[+", 1)[0].strip()
+
+    parts = [title.strip(), description.strip(), content.strip()]
+    return " ".join([p for p in parts if p])
+
+
+def _score_services(combined_text: str) -> List[str]:
+    if not combined_text:
+        return []
+
+    service_scores: Dict[str, float] = {}
+    for service, keywords in SERVICE_KEYWORDS.items():
+        hits = [kw for kw in keywords if kw and kw in combined_text]
+        if not hits:
+            continue
+        weights = [CRISIS_LEXICON.get(kw, 0.6) for kw in hits]
+        service_scores[service] = sum(weights) / len(weights)
+
+    if not service_scores:
+        return []
+
+    threshold = 0.25
+    affected = [svc for svc, score in service_scores.items() if score >= threshold]
+    if not affected:
+        affected = [max(service_scores, key=service_scores.get)]
+    return affected
 
 
 # ---------------------------------------------------------------------------
@@ -162,14 +223,9 @@ def analyze_article(article: Dict[str, Any]) -> Dict[str, Any]:
     else:
         keyword_score = 0.0
 
-    # Step 3: Service classification
-    affected_services: List[str] = []
-    for service, keywords in SERVICE_KEYWORDS.items():
-        for kw in keywords:
-            if kw in combined_text:
-                if service not in affected_services:
-                    affected_services.append(service)
-                break
+    # Step 3: Service classification (keyword scoring)
+    affected_services = _score_services(combined_text)
+    print("SERVICES:", affected_services)
 
     # Step 4: India relevance
     india_hits = sum(1 for term in INDIA_TERMS if term in combined_text)
@@ -198,7 +254,10 @@ def analyze_article(article: Dict[str, Any]) -> Dict[str, Any]:
     summary_src = description if description else title
     summary = summary_src[:150].strip()
 
+    event_id = _build_event_id(article)
+
     return {
+        "id": event_id,
         "title": title,
         "source": article.get("source", "Unknown"),
         "published_at": article.get("published_at", ""),
@@ -211,6 +270,7 @@ def analyze_article(article: Dict[str, Any]) -> Dict[str, Any]:
         "india_relevance": round(india_relevance, 4),
         "combined_severity": combined_severity,
         "crisis_level": crisis_level,
+        "severity": crisis_level,
         "summary": summary,
     }
 

@@ -1,13 +1,7 @@
-import { useState } from 'react'
-import { dispatchAlert } from '../../utils/api'
+import { useEffect, useMemo, useState } from 'react'
+import { dispatchAlert, fetchAlertTemplates, fetchWards } from '../../utils/api'
 import { getSeverityColor } from '../../utils/formatters'
 import { Send, MessageSquare, Smartphone, Bell, Monitor, AlertTriangle, Info, X, Check } from 'lucide-react'
-
-const WARDS = [
-  'All Wards', 'Kothrud', 'Shivajinagar', 'Hadapsar', 'Deccan', 'Aundh',
-  'Baner', 'Hinjewadi', 'Wakad', 'Pimpri', 'Chinchwad', 'Kharadi',
-  'Viman Nagar', 'Koregaon Park', 'Swargate', 'Katraj',
-]
 
 const SERVICES = [
   { key: 'fuel', label: 'Fuel', color: '#F97316' },
@@ -29,15 +23,13 @@ const CHANNELS = [
   { key: 'iccc', label: 'ICCC Dashboard', icon: Monitor },
 ]
 
-const TEMPLATES = [
-  { label: 'Fuel Low', message: 'Fuel buffer below 24 hours in your area. Plan your refueling in advance to avoid disruption.' },
-  { label: 'Power Advisory', message: 'Power demand is elevated. Please conserve electricity between 6 PM – 10 PM to support grid stability.' },
-  { label: 'Supply Disruption', message: 'Essential goods delivery may be delayed due to transport disruption. Current stock levels remain adequate.' },
-]
+const SMS_API_KEY = import.meta.env.VITE_SMS_API_KEY || ''
 
 const BEHAVIORAL_FRAME = 'Most residents in your area are purchasing normally. Steady purchasing helps ensure supply for everyone.'
 
 export default function AlertComposer() {
+  const [wards, setWards] = useState(['All Wards'])
+  const [templates, setTemplates] = useState([])
   const [ward, setWard] = useState('All Wards')
   const [service, setService] = useState('fuel')
   const [severity, setSeverity] = useState('moderate')
@@ -49,6 +41,48 @@ export default function AlertComposer() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState(null)
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadMeta = async () => {
+      try {
+        const [wardData, templateData] = await Promise.all([fetchWards(), fetchAlertTemplates()])
+        if (!mounted) return
+
+        const wardNames = Array.isArray(wardData)
+          ? ['All Wards', ...wardData.map((w) => w.name).filter(Boolean)]
+          : ['All Wards']
+        setWards(Array.from(new Set(wardNames)))
+
+        const flattened = []
+        Object.entries(templateData || {}).forEach(([trigger, entry]) => {
+          const t = entry?.templates || {}
+          Object.entries(t).forEach(([svc, msg]) => {
+            if (svc === 'general' || !msg) return
+            flattened.push({
+              trigger,
+              service: svc,
+              label: `${svc.toUpperCase()} ${trigger}`,
+              message: msg,
+            })
+          })
+        })
+        setTemplates(flattened)
+      } catch {
+        setWards(['All Wards'])
+        setTemplates([])
+      }
+    }
+
+    loadMeta()
+    return () => { mounted = false }
+  }, [])
+
+  const filteredTemplates = useMemo(
+    () => templates.filter((t) => t.service === service),
+    [templates, service]
+  )
+
   const MAX_CHARS = 160
   const fullMessage = behaviorFrame && message ? `${message}\n\n${BEHAVIORAL_FRAME}` : message
   const smsPreview = fullMessage.slice(0, 160)
@@ -59,11 +93,23 @@ export default function AlertComposer() {
     setLoading(true)
     setError(null)
     try {
-      await dispatchAlert({ ward, service, severity, message: fullMessage, channels: Object.keys(channels).filter(k => channels[k]) })
+      await dispatchAlert({
+        ward,
+        service,
+        severity,
+        message: fullMessage,
+        channels: Object.keys(channels).filter((k) => channels[k]),
+        sms_provider: {
+          provider: 'cityshield-sms-gateway',
+          api_key: SMS_API_KEY,
+          send_to: 'all_registered_users',
+          recipients_source: 'users.phone_number',
+        },
+      })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
-      setError('API unavailable — alert saved locally')
+      setError('Backend not available')
       setTimeout(() => setError(null), 4000)
     } finally {
       setLoading(false)
@@ -89,7 +135,7 @@ export default function AlertComposer() {
             className="w-full text-sm rounded-xl px-3 py-2 focus:outline-none transition-colors"
             style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#0F172A' }}
           >
-            {WARDS.map(w => <option key={w} value={w}>{w}</option>)}
+            {wards.map(w => <option key={w} value={w}>{w}</option>)}
           </select>
         </div>
 
@@ -144,10 +190,10 @@ export default function AlertComposer() {
         <div>
           <label className="block text-xs text-text-muted mb-1.5">Quick Templates</label>
           <div className="flex flex-wrap gap-2">
-            {TEMPLATES.map(t => (
+            {filteredTemplates.map(t => (
               <button
-                key={t.label}
-                onClick={() => setMessage(t.message)}
+                key={`${t.service}-${t.trigger}-${t.label}`}
+                onClick={() => setMessage(t.message.replace('{ward}', ward).replace('{timestamp}', new Date().toISOString()))}
                 className="px-2.5 py-1 rounded-lg text-xs text-text-secondary bg-bg-elevated border border-border-default hover:border-border-active hover:text-text-primary transition-colors"
               >
                 {t.label}

@@ -4,15 +4,13 @@ import {
   ResponsiveContainer, ReferenceArea
 } from 'recharts'
 import { fetchScoreHistory } from '../../utils/api'
-
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+import { useCrisis } from '../../context/CrisisContext'
 
 const toUpperTick = (label) => String(label ?? '').toUpperCase()
 
 const SERVICES = [
   { key: 'fuel', color: '#ba1a1a', label: 'Fuel' },
   { key: 'power', color: '#000000', label: 'Power' },
-  { key: 'food', color: '#22c55e', label: 'Food' },
   { key: 'logistics', color: '#c6c6c6', label: 'Logistics' },
 ]
 
@@ -27,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             <span className="material-symbols-outlined text-[10px]" style={{ color: p.color }}>circle</span>
             <span className="text-xs font-bold uppercase tracking-widest text-primary">{p.name}</span>
           </div>
-          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value != null ? p.value.toFixed(1) : '—'}</span>
+          <span className="font-extrabold text-lg letter-spacing-tight" style={{ color: p.color }}>{p.value.toFixed(1)}</span>
         </div>
       ))}
     </div>
@@ -44,12 +42,10 @@ function normalizeHistory(raw) {
 
   const parsed = raw.map((entry, idx) => {
     const services = entry?.services || entry?.scores || {}
-    const day =
-      entry?.day ||
-      entry?.label ||
-      (entry?.timestamp || entry?.date
-        ? new Date(entry.timestamp || entry.date).toLocaleDateString('en-US', { weekday: 'short' })
-        : DAYS[idx % DAYS.length])
+    const stamp = entry?.timestamp || entry?.date
+    const day = entry?.day || entry?.label || (stamp
+      ? new Date(stamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+      : String(idx + 1))
 
     return {
       day,
@@ -68,16 +64,17 @@ function normalizeHistory(raw) {
     }
   })
 
-  return parsed.slice(-7)
+  return parsed.slice(-24)
 }
 
 export default function RiskTimeline() {
   const [chartData, setChartData] = useState([])
+  const { selectedCity } = useCrisis()
 
   useEffect(() => {
     let mounted = true
 
-    fetchScoreHistory(7)
+    fetchScoreHistory({ hours: 24, city: selectedCity })
       .then((res) => {
         if (!mounted) return
         setChartData(normalizeHistory(res))
@@ -88,7 +85,7 @@ export default function RiskTimeline() {
       })
 
     return () => { mounted = false }
-  }, [])
+  }, [selectedCity])
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden isolate max-h-[220px]">

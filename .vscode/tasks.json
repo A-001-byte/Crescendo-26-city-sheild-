@@ -1,0 +1,38 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run CityShield API",
+			"type": "shell",
+			"command": "d:/CityShield/Crescendo-26-city-sheild-/.venv/Scripts/python.exe",
+			"args": [
+				"server/app.py"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run CityShield Client",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev",
+				"--prefix",
+				"client"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run CityShield API",
+			"type": "shell",
+			"command": "d:/CityShield/Crescendo-26-city-sheild-/.venv/Scripts/python.exe",
+			"args": [
+				"server/app.py"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

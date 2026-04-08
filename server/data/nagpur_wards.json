@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Dharampeth",
+    "risk_score": 5.8,
+    "fuel_score": 6.0,
+    "power_score": 5.4,
+    "food_score": 5.3,
+    "logistics_score": 5.9,
+    "population": 150000,
+    "fuel_stations": 6,
+    "hospitals": 4,
+    "buffer_hours": 42
+  },
+  {
+    "name": "Sadar",
+    "risk_score": 6.1,
+    "fuel_score": 6.4,
+    "power_score": 5.8,
+    "food_score": 5.6,
+    "logistics_score": 6.2,
+    "population": 170000,
+    "fuel_stations": 7,
+    "hospitals": 4,
+    "buffer_hours": 40
+  },
+  {
+    "name": "Lakadganj",
+    "risk_score": 6.9,
+    "fuel_score": 7.2,
+    "power_score": 6.4,
+    "food_score": 6.2,
+    "logistics_score": 7.0,
+    "population": 195000,
+    "fuel_stations": 9,
+    "hospitals": 5,
+    "buffer_hours": 34
+  },
+  {
+    "name": "Mhalgi Nagar",
+    "risk_score": 6.6,
+    "fuel_score": 6.9,
+    "power_score": 6.1,
+    "food_score": 5.9,
+    "logistics_score": 6.7,
+    "population": 185000,
+    "fuel_stations": 8,
+    "hospitals": 4,
+    "buffer_hours": 36
+  },
+  {
+    "name": "Sitabuldi",
+    "risk_score": 5.6,
+    "fuel_score": 5.8,
+    "power_score": 5.2,
+    "food_score": 5.1,
+    "logistics_score": 5.7,
+    "population": 120000,
+    "fuel_stations": 5,
+    "hospitals": 3,
+    "buffer_hours": 46
+  },
+  {
+    "name": "Manish Nagar",
+    "risk_score": 6.3,
+    "fuel_score": 6.6,
+    "power_score": 5.9,
+    "food_score": 5.7,
+    "logistics_score": 6.4,
+    "population": 160000,
+    "fuel_stations": 7,
+    "hospitals": 4,
+    "buffer_hours": 38
+  }
+]

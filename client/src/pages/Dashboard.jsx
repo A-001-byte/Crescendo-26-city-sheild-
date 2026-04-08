@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { AlertTriangle, AlertCircle, Radar, Activity, Timer } from 'lucide-react'
 import { useCrisis } from '../context/CrisisContext'
 import CityRiskGauge from '../components/dashboard/CityRiskGauge'
 import ServiceCards from '../components/dashboard/ServiceCards'
@@ -9,8 +10,15 @@ import AnimatedCounter from '../components/common/AnimatedCounter'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { getCityRisk } from '../api/riskApi'
 
+const STAT_CARDS = [
+  { label: 'Active Alerts', icon: AlertCircle, color: 'text-error' },
+  { label: 'Zones Monitored', icon: Radar, color: 'text-primary' },
+  { label: 'Prediction Confidence', icon: Activity, color: 'text-primary' },
+  { label: 'Live Feed', icon: Timer, color: 'text-tertiary-container' },
+]
+
 export default function Dashboard() {
-  const { score, services, loading, lastUpdated, selectedCity } = useCrisis()
+  const { score, services, loading, lastUpdated, selectedCity, wards, feedOnline } = useCrisis()
   const [cityRiskData, setCityRiskData] = useState(null)
   const [cityRiskLoading, setCityRiskLoading] = useState(true)
   const [cityRiskError, setCityRiskError] = useState(false)
@@ -27,10 +35,7 @@ export default function Dashboard() {
           setCityRiskData(data?.data ?? data)
         }
       } catch {
-        if (mounted) {
-          setCityRiskError(true)
-          setCityRiskData(null)
-        }
+        if (mounted) setCityRiskError(true)
       } finally {
         if (mounted) setCityRiskLoading(false)
       }
@@ -39,23 +44,6 @@ export default function Dashboard() {
     loadCityRisk()
     return () => { mounted = false }
   }, [selectedCity])
-
-  const statCards = useMemo(() => [
-    {
-      label: 'Active Alerts',
-      value: cityRiskData?.alerts?.length ?? 0,
-      icon: 'error',
-      color: 'text-error',
-    },
-    {
-      label: 'Zones Monitored',
-      value: Object.keys(cityRiskData?.ward_scores ?? {}).length || 48,
-      icon: 'radar',
-      color: 'text-primary',
-    },
-    { label: 'Events Analyzed', value: 1847, icon: 'monitoring', color: 'text-primary' },
-    { label: 'Uptime %', value: 99.7, icon: 'timer', color: 'text-tertiary-container', decimals: 1 },
-  ], [cityRiskData])
 
   const normalizedScores = useMemo(() => {
     if (!cityRiskData) return null
@@ -96,9 +84,21 @@ export default function Dashboard() {
         ? `Live risk feed for ${selectedCity} is temporarily unavailable.`
         : `Live risk feed active for ${selectedCity}.`)
 
-  const resolvedScore = Number.isFinite(Number(cityRiskData?.score))
-    ? Number(cityRiskData.score)
+  const candidateScore = cityRiskData?.score ?? cityRiskData?.overall_crs
+  const resolvedScore = Number.isFinite(Number(candidateScore))
+    ? Number(candidateScore)
     : score
+
+  const prediction48h = cityRiskData?.prediction_48h || {}
+  const predictionSummary = cityRiskData?.prediction_summary || {}
+  const confidence = cityRiskData?.confidence || 'unknown'
+
+  const statsValues = {
+    'Active Alerts': Array.isArray(cityRiskData?.alerts) ? cityRiskData.alerts.length : 0,
+    'Zones Monitored': Array.isArray(wards) ? wards.length : 0,
+    'Prediction Confidence': String(confidence).toUpperCase(),
+    'Live Feed': feedOnline ? 'ONLINE' : 'OFFLINE',
+  }
 
   const resolvedServices = {
     ...services,
@@ -123,7 +123,18 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <LoadingSpinner size="lg" />
+        <div className="flex flex-col items-center gap-3">
+          <LoadingSpinner size="lg" />
+          <div className="text-sm font-semibold text-secondary">Loading risk data...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (cityRiskError) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-base font-semibold text-error">Backend not available</div>
       </div>
     )
   }
@@ -141,7 +152,7 @@ export default function Dashboard() {
           <div className="lg:col-span-7">
             <div className="bg-surface-container-lowest rounded-[3rem] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
               <div className="w-full flex items-center gap-3">
-                <span className="material-symbols-outlined text-error">warning</span>
+                <AlertTriangle className="w-4 h-4 text-error" />
                 <span className="text-xs font-extrabold uppercase tracking-widest text-primary">{resolvedAlertBannerText}</span>
               </div>
 
@@ -162,17 +173,19 @@ export default function Dashboard() {
           <div className="lg:col-span-5 flex justify-end">
             <div className="bg-surface-container-lowest rounded-[2rem] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] aspect-square w-full max-w-[300px] self-start">
               <div className="grid grid-cols-2 gap-3 h-full">
-                {statCards.map(({ label, value, icon, color, decimals }) => (
+                {STAT_CARDS.map(({ label, icon: Icon, color, decimals }) => (
                   <div
                     key={label}
                     className="flex flex-col gap-3 bg-surface-container-low rounded-[1.5rem] p-3"
                   >
                     <div className={`w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest ${color}`}>
-                      <span className="material-symbols-outlined text-sm">{icon}</span>
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xl font-extrabold letter-spacing-tight text-primary">
-                        <AnimatedCounter value={value} decimals={decimals || 0} />
+                        {typeof statsValues[label] === 'number'
+                          ? <AnimatedCounter value={statsValues[label]} decimals={decimals || 0} />
+                          : <span>{statsValues[label]}</span>}
                       </div>
                       <div className="text-[10px] text-secondary font-bold tracking-widest uppercase">{label}</div>
                     </div>
@@ -211,7 +224,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="col-span-1 lg:col-span-8 relative z-0 flex flex-col justify-center bg-surface-container-lowest rounded-[3rem] p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+            <div className="col-span-1 lg:col-span-8 relative z-0 flex flex-col justify-center bg-surface-container-lowest rounded-[3rem] p-7 shadow-[0_8px_30px_rgba(0,0,0,0.04)] min-w-0 overflow-hidden">
               <ServiceCards data={resolvedServices} />
             </div>
           </div>
@@ -235,6 +248,37 @@ export default function Dashboard() {
               />
             </div>
           </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="w-full snap-start scroll-section"
+        initial={{ opacity: 0, y: 6 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="bg-surface-container-lowest rounded-[3rem] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+          <div className="text-[10px] uppercase tracking-widest font-extrabold text-secondary mb-4">48-Hour Forecast</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { key: 'fuel', label: 'Fuel' },
+              { key: 'food', label: 'Food' },
+              { key: 'transport', label: 'Transport' },
+              { key: 'power', label: 'Power' },
+            ].map((item) => {
+              const trend = String(predictionSummary[item.key] || 'stable').toLowerCase()
+              const arrow = trend.includes('increase') ? '↑' : trend.includes('decrease') ? '↓' : '→'
+              const score = Number(prediction48h[item.key])
+              return (
+                <div key={item.key} className="bg-surface-container-low rounded-[1.5rem] p-4">
+                  <div className="text-sm font-bold text-primary">{item.label} {'->'} {trend.replace('_', ' ')} {arrow}</div>
+                  <div className="text-xs text-secondary mt-1">Projected score: {Number.isFinite(score) ? score.toFixed(1) : 'N/A'}</div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="text-xs text-secondary mt-4">Confidence: {String(confidence).toUpperCase()}</div>
         </div>
       </motion.section>
 

@@ -58,6 +58,34 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_created_at
     ON users(created_at DESC);
 
+CREATE TABLE IF NOT EXISTS auth_users (
+    id UUID PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_users_created_at
+    ON auth_users(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS login_events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+    success BOOLEAN NOT NULL DEFAULT TRUE,
+    city TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_events_created_at
+    ON login_events(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_login_events_user_created_at
+    ON login_events(user_id, created_at DESC);
+
 -- ---------------------------------------------------------------------------
 -- Time-series retention and optional partition maintenance helpers
 -- ---------------------------------------------------------------------------

@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Panchavati",
+    "risk_score": 6.2,
+    "fuel_score": 6.5,
+    "power_score": 6.0,
+    "food_score": 5.8,
+    "logistics_score": 6.3,
+    "population": 180000,
+    "fuel_stations": 7,
+    "hospitals": 4,
+    "buffer_hours": 40
+  },
+  {
+    "name": "Gangapur",
+    "risk_score": 5.5,
+    "fuel_score": 5.8,
+    "power_score": 5.2,
+    "food_score": 5.1,
+    "logistics_score": 5.6,
+    "population": 140000,
+    "fuel_stations": 5,
+    "hospitals": 3,
+    "buffer_hours": 46
+  },
+  {
+    "name": "Satpur",
+    "risk_score": 6.8,
+    "fuel_score": 7.1,
+    "power_score": 6.4,
+    "food_score": 6.0,
+    "logistics_score": 6.9,
+    "population": 165000,
+    "fuel_stations": 8,
+    "hospitals": 3,
+    "buffer_hours": 36
+  },
+  {
+    "name": "Nashik Road",
+    "risk_score": 7.0,
+    "fuel_score": 7.3,
+    "power_score": 6.6,
+    "food_score": 6.4,
+    "logistics_score": 7.2,
+    "population": 210000,
+    "fuel_stations": 9,
+    "hospitals": 5,
+    "buffer_hours": 32
+  },
+  {
+    "name": "Indira Nagar",
+    "risk_score": 5.9,
+    "fuel_score": 6.1,
+    "power_score": 5.6,
+    "food_score": 5.4,
+    "logistics_score": 6.0,
+    "population": 155000,
+    "fuel_stations": 6,
+    "hospitals": 4,
+    "buffer_hours": 44
+  },
+  {
+    "name": "College Road",
+    "risk_score": 5.3,
+    "fuel_score": 5.5,
+    "power_score": 5.0,
+    "food_score": 4.8,
+    "logistics_score": 5.4,
+    "population": 130000,
+    "fuel_stations": 5,
+    "hospitals": 3,
+    "buffer_hours": 48
+  }
+]

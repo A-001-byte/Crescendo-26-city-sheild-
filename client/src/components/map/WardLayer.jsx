@@ -2,10 +2,13 @@ import { GeoJSON } from 'react-leaflet'
 import { useEffect, useMemo, useState } from 'react'
 import wardData from '../../data/puneWards.geojson'
 import { getWardRisk } from '../../api/riskApi'
-import { getRiskColor } from '../../utils/riskCalculations'
 
 function getWardRiskColor(score) {
-  return getRiskColor(score)
+  const s = Number(score)
+  if (!Number.isFinite(s)) return '#EAB308'
+  if (s <= 3) return '#16A34A'
+  if (s <= 7) return '#EAB308'
+  return '#DC2626'
 }
 
 function getWardStyle(feature, selectedName) {
@@ -31,37 +34,39 @@ export default function WardLayer({ onWardSelect }) {
 
     const loadWardRisk = async () => {
       try {
-        const wardNames = wardData.features
-          .map((feature) => feature?.properties?.name)
-          .filter(Boolean)
-
-        const wardResponses = await Promise.all(
-          wardNames.map(async (name) => ({ name, data: await getWardRisk(name) }))
-        )
+        const wardResponse = await getWardRisk()
+        const wardScores = wardResponse?.scores || {}
 
         if (!mounted) return
 
         const scores = {}
         const services = {}
 
-        wardResponses.forEach(({ name, data }) => {
-          const score = Number(data?.score)
+        Object.entries(wardScores).forEach(([name, data]) => {
+          const fuel = Number(data?.fuel)
+          const food = Number(data?.food)
+          const transport = Number(data?.transport)
+          const power = Number(data?.power)
+          const vals = [fuel, food, transport, power].filter((v) => Number.isFinite(v))
+          const score = vals.length ? vals.reduce((sum, v) => sum + v, 0) / vals.length : null
+
           if (Number.isFinite(score)) {
             scores[name] = score
           }
 
           services[name] = {
-            fuel: Number(data?.services?.fuel),
-            food: Number(data?.services?.food),
-            transport: Number(data?.services?.transport),
-            power: Number(data?.services?.power),
+            fuel,
+            food,
+            transport,
+            power,
           }
         })
 
         setLiveWardScores(Object.keys(scores).length ? scores : null)
         setLiveWardServices(Object.keys(services).length ? services : null)
       } catch {
-        // Keep existing GeoJSON ward scores when API is unavailable.
+        setLiveWardScores(null)
+        setLiveWardServices(null)
       }
     }
 

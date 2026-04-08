@@ -27,6 +27,21 @@ body {
 }
 
 .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
@@ -105,6 +120,17 @@ body {
   letter-spacing: -0.04em;
 }
 
+.page-shell {
+  padding: 1rem;
+}
+
+.panel-soft {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(198, 198, 198, 0.55);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
 .font-heading,
 .font-body,
 input,
@@ -165,8 +191,9 @@ textarea {
   display: none !important;
 }
 
-/* Confine Leaflet stacking context without overriding internal pane hierarchy */
-.map-wrapper { isolation: isolate; }
+/* Force Leaflet inside context */
+.leaflet-pane { z-index: 4 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 5 !important; }
 
 /* Suppress map when sidebar/modal open */
 .modal-open .map-container,
@@ -198,3 +225,72 @@ textarea {
 
 /* Remove rogue z-index from capsules */
 .alert-capsule { position: static; z-index: auto; }
+
+/* ── Dark auth page inputs ─────────────────────────────────────────── */
+.dark-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.92);
+  transition: border-color 0.2s, background 0.2s;
+}
+.dark-input::placeholder {
+  color: rgba(255, 255, 255, 0.30);
+}
+.dark-input:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* ── Auth page scan-line accent ────────────────────────────────────── */
+@keyframes auth-scanline {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 0.06; }
+  90%  { opacity: 0.06; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+.auth-scanline {
+  position: absolute;
+  inset-x: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(96,165,250,0.5), transparent);
+  animation: auth-scanline 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.map-shell {
+  position: relative;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.city-badge {
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  text-align: right;
+  padding: 10px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 120px;
+  border-left: 4px solid var(--risk-color, #22c55e);
+}
+
+.city-name {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+  text-transform: capitalize;
+}
+
+.city-score {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}

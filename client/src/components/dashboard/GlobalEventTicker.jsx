@@ -2,37 +2,26 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCrisis } from '../../context/CrisisContext'
 
-const MOCK_NEWS = [
-  { id: 1, title: 'Strait of Hormuz tensions rising: Brent Crude up +3.2%', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=100&h=100&q=80', time: '10 mins ago' },
-  { id: 2, title: 'India Grid Load drops to 203 GW: Back in Normal Range', img: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=100&h=100&q=80', time: '25 mins ago' },
-  { id: 3, title: 'Black Sea corridor update: Wheat futures push +1.8%', img: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=100&h=100&q=80', time: '1 hr ago' },
-  { id: 4, title: 'Shipping disruptions hit Red Sea: Freight costs jump 12%', img: 'https://images.unsplash.com/photo-1558237255-ed19a27c7d4a?auto=format&fit=crop&w=100&h=100&q=80', time: '2 hrs ago' },
-]
-
 export default function GlobalEventTicker() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  // Use either context events or mock news
   const ctx = useCrisis()
-  let newsList = MOCK_NEWS
-  
-  if (ctx?.events?.length) {
-    newsList = ctx.events.slice(0, 4).map((e, i) => ({
-      id: e.id || i,
-      title: e.title,
-      img: MOCK_NEWS[i % MOCK_NEWS.length].img,
-      time: 'Just now'
-    }))
-  }
+  const newsList = (ctx?.events || []).slice(0, 4).map((e, i) => ({
+    id: e.id || i,
+    title: e.title || e.summary || 'Risk update',
+    time: e.published_at ? new Date(e.published_at).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Now',
+  }))
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % newsList.length)
+      setCurrentIndex((prev) => (prev + 1) % Math.max(newsList.length, 1))
     }, 4500)
     return () => clearInterval(timer)
   }, [newsList.length])
 
-  const currentNews = newsList[currentIndex]
+  const currentNews = newsList.length
+    ? newsList[currentIndex]
+    : { id: 'no-events', title: 'Loading risk data...', time: 'Now' }
 
   return (
     <div
@@ -60,11 +49,9 @@ export default function GlobalEventTicker() {
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="flex items-center w-full"
           >
-            <img 
-              src={currentNews.img} 
-              alt="news thumbnail"
-              className="w-12 h-12 object-cover rounded-md flex-shrink-0 mr-3 hidden sm:block shadow-sm"
-            />
+            <div className="w-12 h-12 rounded-md flex-shrink-0 mr-3 hidden sm:flex shadow-sm bg-blue-100 items-center justify-center">
+              <span className="text-[10px] font-mono font-bold text-blue-700">LIVE</span>
+            </div>
             <div className="flex flex-col flex-1 min-w-0">
               <span 
                 className="text-sm font-bold truncate block"

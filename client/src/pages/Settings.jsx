@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Shield, Server, Bell, Sliders, Info, CheckCircle } from 'lucide-react'
-
-const WARDS = [
-  'Kothrud', 'Shivajinagar', 'Hadapsar', 'Deccan', 'Aundh',
-  'Baner', 'Hinjewadi', 'Wakad', 'Pimpri', 'Chinchwad',
-  'Kharadi', 'Viman Nagar', 'Koregaon Park', 'Swargate', 'Katraj',
-]
+import {
+  fetchCityConfig,
+  fetchCrisisScore,
+  fetchLatestEvents,
+  fetchOilData,
+  fetchWards,
+} from '../utils/api'
 
 function Section({ icon: Icon, title, children }) {
   return (
-    <div className="bg-bg-card border border-border-default rounded-xl shadow-lg overflow-hidden">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border-default bg-bg-elevated/40">
+    <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-outline-variant/30 bg-surface-container-low/50">
         <Icon className="w-4 h-4 text-accent-blue" />
         <h3 className="font-heading font-semibold text-text-primary text-sm">{title}</h3>
       </div>
@@ -40,20 +41,69 @@ function Slider({ label, value, onChange, min = 0, max = 10, step = 0.1, color =
 
 export default function Settings() {
   const [city, setCity] = useState('Pune')
-  const [enabledWards, setEnabledWards] = useState(new Set(WARDS))
+  const [wardList, setWardList] = useState([])
+  const [enabledWards, setEnabledWards] = useState(new Set())
   const [thresholds, setThresholds] = useState({ yellow: 5, orange: 7, red: 9 })
-  const [apiKeys, setApiKeys] = useState({ newsapi: '', alphavantage: '' })
+  const [apiKeys, setApiKeys] = useState({ events: '', oil: '', risk: '' })
   const [tested, setTested] = useState({})
   const [notifications, setNotifications] = useState({ sms: true, push: true, email: false, whatsapp: false })
   const [quietStart, setQuietStart] = useState('22')
   const [quietEnd, setQuietEnd] = useState('07')
   const [weights, setWeights] = useState({ fuel: 0.35, power: 0.25, food: 0.20, logistics: 0.20 })
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadSettings = async () => {
+      try {
+        const [wardData, cfg] = await Promise.all([fetchWards(), fetchCityConfig()])
+        if (!mounted) return
+
+        const names = Array.isArray(wardData) ? wardData.map((w) => w.name).filter(Boolean) : []
+        setWardList(names)
+        setEnabledWards(new Set(names))
+
+        if (cfg?.city) setCity(cfg.city)
+
+        if (cfg?.service_weights) {
+          setWeights({
+            fuel: Number(cfg.service_weights.fuel ?? 0.35),
+            power: Number(cfg.service_weights.power ?? 0.25),
+            food: Number(cfg.service_weights.food ?? 0.20),
+            logistics: Number(cfg.service_weights.logistics ?? 0.20),
+          })
+        }
+
+        if (cfg?.alert_thresholds) {
+          setThresholds({
+            yellow: Number(cfg.alert_thresholds.yellow?.min ?? 5),
+            orange: Number(cfg.alert_thresholds.orange?.min ?? 7),
+            red: Number(cfg.alert_thresholds.red?.min ?? 9),
+          })
+        }
+      } catch {
+        if (!mounted) return
+        setWardList([])
+        setEnabledWards(new Set())
+      }
+    }
+
+    loadSettings()
+    return () => { mounted = false }
+  }, [])
+
   const weightsSum = Object.values(weights).reduce((a, b) => a + b, 0)
 
-  const testApi = (key) => {
+  const testApi = async (key) => {
     setTested(t => ({ ...t, [key]: 'testing' }))
-    setTimeout(() => setTested(t => ({ ...t, [key]: 'ok' })), 1500)
+    try {
+      if (key === 'events') await fetchLatestEvents(1)
+      if (key === 'oil') await fetchOilData()
+      if (key === 'risk') await fetchCrisisScore({ city })
+      setTested(t => ({ ...t, [key]: 'ok' }))
+    } catch {
+      setTested(t => ({ ...t, [key]: 'error' }))
+    }
   }
 
   const toggleWard = (w) => {
@@ -69,7 +119,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="p-4 space-y-4 max-w-4xl">
+    <div className="page-shell space-y-4 max-w-5xl">
       {/* City Config */}
       <Section icon={Shield} title="City Configuration">
         <div className="space-y-4">
@@ -87,7 +137,7 @@ export default function Settings() {
           <div>
             <div className="text-xs text-text-muted mb-2">Ward Monitoring</div>
             <div className="flex flex-wrap gap-1.5">
-              {WARDS.map(w => (
+              {wardList.map(w => (
                 <button
                   key={w}
                   onClick={() => toggleWard(w)}
@@ -119,23 +169,25 @@ export default function Settings() {
       <Section icon={Server} title="API Configuration">
         <div className="space-y-3">
           {[
-            { key: 'newsapi', label: 'NewsAPI Key', placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
-            { key: 'alphavantage', label: 'Alpha Vantage Key', placeholder: 'XXXXXXXXXXXXXXXXXX' },
+            { key: 'events', label: 'Events Feed (/api/events/latest)', placeholder: 'Connected to backend' },
+            { key: 'oil', label: 'Oil Tracker (/api/events/oil)', placeholder: 'Connected to backend' },
+            { key: 'risk', label: 'Risk Engine (/api/risk/city-score)', placeholder: 'Connected to backend' },
           ].map(({ key, label, placeholder }) => (
             <div key={key} className="flex items-center gap-2">
               <label className="text-xs text-text-secondary w-36">{label}</label>
               <input
-                type="password"
+                type="text"
                 value={apiKeys[key]}
                 onChange={e => setApiKeys(k => ({ ...k, [key]: e.target.value }))}
                 placeholder={placeholder}
                 className="flex-1 bg-bg-elevated border border-border-default text-text-secondary text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-border-active font-mono"
+                disabled
               />
               <button
-                onClick={() => testApi(key)}
+                onClick={() => { void testApi(key) }}
                 className="px-3 py-1.5 text-xs rounded-lg border border-border-default text-text-secondary hover:border-border-active hover:text-text-primary transition-colors"
               >
-                {tested[key] === 'testing' ? '...' : tested[key] === 'ok' ? '✓ OK' : 'Test'}
+                {tested[key] === 'testing' ? '...' : tested[key] === 'ok' ? 'OK' : tested[key] === 'error' ? 'Error' : 'Test'}
               </button>
             </div>
           ))}
@@ -218,8 +270,8 @@ export default function Settings() {
           <div className="flex gap-3"><span className="text-text-muted w-28">Version</span><span className="font-mono">1.0.0-hackathon</span></div>
           <div className="flex gap-3"><span className="text-text-muted w-28">Build</span><span className="font-mono">2025.04.05</span></div>
           <div className="flex gap-3"><span className="text-text-muted w-28">Model</span><span className="font-mono">CRS v2.1</span></div>
-          <div className="flex gap-3"><span className="text-text-muted w-28">Coverage</span><span>Pune Metropolitan Area</span></div>
-          <div className="flex gap-3"><span className="text-text-muted w-28">Data Sources</span><span>NewsAPI, Alpha Vantage, MSEDCL, OMC</span></div>
+          <div className="flex gap-3"><span className="text-text-muted w-28">Coverage</span><span>{city} Metropolitan Area</span></div>
+          <div className="flex gap-3"><span className="text-text-muted w-28">Data Sources</span><span>Backend events, oil tracker, risk engine</span></div>
           <p className="text-xs text-text-muted mt-3 pt-3 border-t border-border-default">
             CityShield uses AI-driven geopolitical signal analysis to compute real-time city risk scores and enable proactive supply chain management.
           </p>

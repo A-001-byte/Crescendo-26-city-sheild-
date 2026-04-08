@@ -1,124 +1,127 @@
-import { useMemo, useState } from 'react'
-import { Search, CheckCircle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useCrisis } from '../../context/CrisisContext'
+import { fetchAlerts } from '../../utils/api'
 
-const HISTORY = [
-  { id: 'h1', severity: 'high', ward: 'Katraj', service: 'fuel', message: 'test' },
-  { id: 'h2', severity: 'high', ward: 'Hadapsar', service: 'logistics', message: 'test' },
-  { id: 'h3', severity: 'moderate', ward: 'Swargate', service: 'food', message: 'test' },
-  { id: 'h4', severity: 'moderate', ward: 'Pimpri', service: 'power', message: 'test' },
-  { id: 'h5', severity: 'low', ward: 'Kothrud', service: 'fuel', message: 'test' },
-  { id: 'h6', severity: 'high', ward: 'All Wards', service: 'fuel', message: 'test' },
-  { id: 'h7', severity: 'moderate', ward: 'Chinchwad', service: 'food', message: 'test' },
-  { id: 'h8', severity: 'low', ward: 'Aundh', service: 'power', message: 'test' },
-  { id: 'h9', severity: 'high', ward: 'Katraj', service: 'fuel', message: 'test' },
-  { id: 'h10', severity: 'moderate', ward: 'Hinjewadi', service: 'logistics', message: 'test' },
-]
-
-const SEVERITY_CONFIG = {
-  high: { bg: '#FEE2E2', text: '#B91C1C', border: '#FCA5A5', label: 'HIGH', score: 8 },
-  moderate: { bg: '#FEF3C7', text: '#B45309', border: '#FCD34D', label: 'MEDIUM', score: 5 },
-  low: { bg: '#DCFCE7', text: '#15803D', border: '#86EFAC', label: 'LOW', score: 2 },
+const SEV = {
+  high:     { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', dot: '#ef4444', label: 'HIGH' },
+  moderate: { bg: '#fffbeb', text: '#b45309', border: '#fde68a', dot: '#f59e0b', label: 'MED'  },
+  low:      { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0', dot: '#22c55e', label: 'LOW'  },
 }
 
-function MinimalAlertCard({ a, index }) {
-  const cfg = SEVERITY_CONFIG[a.severity] || SEVERITY_CONFIG.low
+const SERVICE_COLORS = {
+  fuel: '#ef4444', power: '#f59e0b', food: '#22c55e', logistics: '#6366f1',
+}
+
+function AlertCard({ a }) {
+  const cfg = SEV[a.severity] || SEV.low
+  const svcColor = SERVICE_COLORS[a.service] || '#94a3b8'
 
   return (
     <div
-      key={a.id}
-      className="max-w-md mx-auto w-full flex items-center justify-between p-3 border"
-      style={{
-        backgroundColor: cfg.bg,
-        color: cfg.text,
-        borderColor: cfg.border,
-      }}
+      className="flex items-center justify-between gap-3 p-4 rounded-2xl border"
+      style={{ background: cfg.bg, borderColor: cfg.border }}
     >
-      <span className="font-bold text-sm tracking-wide">{a.ward.toUpperCase()}</span>
-      <span className="font-bold text-sm">{cfg.label}</span>
-      <span className="font-bold text-sm">{cfg.score}</span>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+        <div className="min-w-0">
+          <div className="text-sm font-extrabold uppercase tracking-wide truncate" style={{ color: cfg.text }}>
+            {a.ward}
+          </div>
+          <div
+            className="text-[10px] font-extrabold uppercase tracking-widest mt-0.5"
+            style={{ color: svcColor }}
+          >
+            {a.service}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span
+          className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full"
+          style={{ background: cfg.border, color: cfg.text }}
+        >
+          {cfg.label}
+        </span>
+      </div>
     </div>
   )
 }
 
 export default function AlertHistory() {
   const { alerts } = useCrisis()
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('all')
   const [serviceFilter, setServiceFilter] = useState('all')
 
+  useEffect(() => {
+    let mounted = true
+    fetchAlerts('all')
+      .then((data) => { if (mounted && Array.isArray(data)) setHistory(data) })
+      .catch(() => {})
+      .finally(() => { if (mounted) setLoading(false) })
+    return () => { mounted = false }
+  }, [])
+
   const items = useMemo(() => {
-    const source = alerts?.length ? alerts : HISTORY
-    return source.map((a, index) => {
-      const severity = String(a.severity || a.level || 'low').toLowerCase()
-      const severityMap = {
-        red: 'high',
-        orange: 'moderate',
-        yellow: 'moderate',
-        green: 'low',
-      }
-      const mappedSeverity = severityMap[severity] || severity
-      const normalizedSeverity = ['high', 'moderate', 'low'].includes(mappedSeverity) ? mappedSeverity : 'low'
+    const source = history.length ? history : (alerts || [])
+    return source.map((a, i) => {
+      const rawSev = String(a.severity || a.level || 'low').toLowerCase()
+      const sevMap = { red: 'high', orange: 'moderate', yellow: 'moderate', green: 'low' }
+      const sev = ['high', 'moderate', 'low'].includes(rawSev) ? rawSev : (sevMap[rawSev] || 'low')
       return {
-        id: a.id || `h-${index}`,
-        severity: normalizedSeverity,
+        id: a.id || `h-${i}`,
+        severity: sev,
         ward: a.ward || a.area || 'All Wards',
         service: a.service || a.category || 'fuel',
         message: a.message || '',
       }
     })
-  }, [alerts])
+  }, [history, alerts])
 
-  const filtered = items.filter(a => {
+  const filtered = items.filter((a) => {
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false
     if (serviceFilter !== 'all' && a.service !== serviceFilter) return false
     if (search && !a.ward.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
+  const selectCls = 'text-[11px] font-semibold px-3 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-primary focus:outline-none focus:border-primary/40 transition-colors'
+
   return (
-    <div className="flex flex-col h-full" style={{ background: 'transparent' }}>
-      {/* Header & Filters */}
-      <div
-        className="px-4 pt-4 pb-3 mb-3 flex-shrink-0 shadow-sm"
-        style={{ background: '#FFFFFF', border: '1px solid #DBEAFE' }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-heading font-semibold text-base tracking-wide uppercase" style={{ color: '#0F172A' }}>Alert History</h3>
-          <span className="text-xs font-mono px-2 py-0.5" style={{ background: '#EFF6FF', color: '#3B82F6' }}>
+    <div
+      className="flex flex-col h-full rounded-3xl overflow-hidden"
+      style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 4px 24px rgba(0,0,0,0.05)' }}
+    >
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-outline-variant/20 flex-shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-extrabold uppercase tracking-widest text-primary">Alert History</h3>
+          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-surface-container-low text-secondary">
             {filtered.length} records
           </span>
         </div>
+
+        {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-40">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#94A3B8' }} />
+          <div className="relative flex-1 min-w-36">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary select-none" style={{ fontSize: 15 }}>search</span>
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search area..."
-              className="w-full text-xs pl-8 pr-3 py-2 focus:outline-none"
-              style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
-              onFocus={e => e.target.style.borderColor = '#3B82F6'}
-              onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search ward…"
+              className="w-full text-[11px] pl-9 pr-3 py-2 rounded-xl border border-outline-variant/40 bg-surface-container-low text-primary placeholder:text-secondary/50 focus:outline-none focus:border-primary/40 transition-colors"
             />
           </div>
-          <select
-            value={severityFilter}
-            onChange={e => setSeverityFilter(e.target.value)}
-            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
-          >
+          <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className={selectCls}>
             <option value="all">All Severity</option>
             <option value="high">High</option>
             <option value="moderate">Moderate</option>
             <option value="low">Low</option>
           </select>
-          <select
-            value={serviceFilter}
-            onChange={e => setServiceFilter(e.target.value)}
-            className="text-xs px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155' }}
-          >
+          <select value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)} className={selectCls}>
             <option value="all">All Services</option>
             <option value="fuel">Fuel</option>
             <option value="power">Power</option>
@@ -128,17 +131,18 @@ export default function AlertHistory() {
         </div>
       </div>
 
-      {/* Notification Cards */}
-      <div className="flex-1 overflow-y-auto px-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map((a, i) => (
-            <MinimalAlertCard key={a.id} a={a} index={i} />
-          ))}
-        </div>
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16" style={{ color: '#94A3B8' }}>
-            <CheckCircle className="w-10 h-10 mb-3 opacity-40" />
-            <p className="text-sm font-medium">No alerts match your filters</p>
+      {/* Cards */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 no-scrollbar">
+        {loading ? (
+          <div className="text-xs text-secondary text-center py-10">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-secondary">
+            <span className="material-symbols-outlined text-4xl mb-3 opacity-30">check_circle</span>
+            <p className="text-sm font-semibold">No alerts match your filters</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filtered.map((a) => <AlertCard key={a.id} a={a} />)}
           </div>
         )}
       </div>

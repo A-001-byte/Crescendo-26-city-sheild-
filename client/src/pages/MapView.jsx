@@ -1,9 +1,11 @@
-import CityMap from '../components/map/CityMap'
+import CityMap from '../features/map/CityMap'
 
 export default function MapView() {
   return (
-    <div style={{ height: 'calc(100vh - 64px)' }}>
-      <CityMap />
+    <div className="page-shell h-full">
+      <div className="panel-soft overflow-hidden" style={{ height: 'calc(100vh - 120px)', minHeight: 520 }}>
+        <CityMap />
+      </div>
     </div>
   )
 }

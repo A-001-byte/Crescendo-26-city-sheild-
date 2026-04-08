@@ -316,3 +316,38 @@ def fetch_alert_volume(hours: int = 168) -> List[Dict[str, Any]]:
         ORDER BY count DESC;
     """
     return fetch_all(query, (hours,))
+
+
+def fetch_login_activity(days: int = 7, city: Optional[str] = None) -> List[Dict[str, Any]]:
+    if not is_db_enabled():
+        return []
+
+    ensure_schema()
+
+    days = max(1, min(int(days), 90))
+
+    if city:
+        query = """
+            SELECT
+                date_trunc('day', created_at)::date AS day,
+                COUNT(*) AS logins
+            FROM login_events
+            WHERE success = TRUE
+              AND city = %s
+              AND created_at >= NOW() - MAKE_INTERVAL(days => %s)
+            GROUP BY day
+            ORDER BY day ASC;
+        """
+        return fetch_all(query, (city, days))
+
+    query = """
+        SELECT
+            date_trunc('day', created_at)::date AS day,
+            COUNT(*) AS logins
+        FROM login_events
+        WHERE success = TRUE
+          AND created_at >= NOW() - MAKE_INTERVAL(days => %s)
+        GROUP BY day
+        ORDER BY day ASC;
+    """
+    return fetch_all(query, (days,))

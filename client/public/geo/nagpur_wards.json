@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Dharampeth" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.055, 21.145], [79.080, 21.145], [79.080, 21.165], [79.055, 21.165], [79.055, 21.145]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Sadar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.075, 21.160], [79.100, 21.160], [79.100, 21.180], [79.075, 21.180], [79.075, 21.160]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Lakadganj" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.110, 21.135], [79.135, 21.135], [79.135, 21.155], [79.110, 21.155], [79.110, 21.135]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mhalgi Nagar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.100, 21.170], [79.130, 21.170], [79.130, 21.190], [79.100, 21.190], [79.100, 21.170]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Sitabuldi" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.075, 21.140], [79.100, 21.140], [79.100, 21.160], [79.075, 21.160], [79.075, 21.140]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Manish Nagar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[79.060, 21.110], [79.090, 21.110], [79.090, 21.130], [79.060, 21.130], [79.060, 21.110]]]
+      }
+    }
+  ]
+}

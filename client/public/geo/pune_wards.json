@@ -1,0 +1,335 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kothrud",
+        "riskScore": 6.2,
+        "fuelScore": 7.1,
+        "powerScore": 4.5,
+        "foodScore": 5.8,
+        "logisticsScore": 6.2,
+        "population": 285000,
+        "fuelStations": 18,
+        "hospitals": 4,
+        "bufferHours": 42
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.800, 18.500], [73.830, 18.500], [73.830, 18.520],
+          [73.800, 18.520], [73.800, 18.500]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Shivajinagar",
+        "riskScore": 4.8,
+        "fuelScore": 4.2,
+        "powerScore": 3.8,
+        "foodScore": 4.5,
+        "logisticsScore": 5.2,
+        "population": 120000,
+        "fuelStations": 12,
+        "hospitals": 6,
+        "bufferHours": 58
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.840, 18.520], [73.860, 18.520], [73.860, 18.540],
+          [73.840, 18.540], [73.840, 18.520]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Hadapsar",
+        "riskScore": 7.8,
+        "fuelScore": 8.2,
+        "powerScore": 6.5,
+        "foodScore": 7.1,
+        "logisticsScore": 8.0,
+        "population": 340000,
+        "fuelStations": 22,
+        "hospitals": 5,
+        "bufferHours": 28
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.930, 18.490], [73.960, 18.490], [73.960, 18.520],
+          [73.930, 18.520], [73.930, 18.490]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Deccan",
+        "riskScore": 5.5,
+        "fuelScore": 5.8,
+        "powerScore": 4.0,
+        "foodScore": 5.2,
+        "logisticsScore": 5.9,
+        "population": 95000,
+        "fuelStations": 8,
+        "hospitals": 7,
+        "bufferHours": 48
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.830, 18.510], [73.850, 18.510], [73.850, 18.530],
+          [73.830, 18.530], [73.830, 18.510]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Aundh",
+        "riskScore": 4.2,
+        "fuelScore": 4.5,
+        "powerScore": 3.2,
+        "foodScore": 4.8,
+        "logisticsScore": 4.0,
+        "population": 180000,
+        "fuelStations": 14,
+        "hospitals": 3,
+        "bufferHours": 65
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.800, 18.550], [73.820, 18.550], [73.820, 18.570],
+          [73.800, 18.570], [73.800, 18.550]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Baner",
+        "riskScore": 3.8,
+        "fuelScore": 3.5,
+        "powerScore": 3.0,
+        "foodScore": 4.2,
+        "logisticsScore": 4.0,
+        "population": 210000,
+        "fuelStations": 16,
+        "hospitals": 4,
+        "bufferHours": 72
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.770, 18.550], [73.800, 18.550], [73.800, 18.570],
+          [73.770, 18.570], [73.770, 18.550]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Hinjewadi",
+        "riskScore": 5.1,
+        "fuelScore": 6.0,
+        "powerScore": 4.5,
+        "foodScore": 4.8,
+        "logisticsScore": 5.2,
+        "population": 155000,
+        "fuelStations": 10,
+        "hospitals": 2,
+        "bufferHours": 51
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.720, 18.580], [73.750, 18.580], [73.750, 18.600],
+          [73.720, 18.600], [73.720, 18.580]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Wakad",
+        "riskScore": 4.6,
+        "fuelScore": 4.8,
+        "powerScore": 3.9,
+        "foodScore": 4.5,
+        "logisticsScore": 5.0,
+        "population": 165000,
+        "fuelStations": 12,
+        "hospitals": 3,
+        "bufferHours": 60
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.740, 18.590], [73.770, 18.590], [73.770, 18.610],
+          [73.740, 18.610], [73.740, 18.590]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Pimpri",
+        "riskScore": 6.9,
+        "fuelScore": 7.5,
+        "powerScore": 5.8,
+        "foodScore": 6.2,
+        "logisticsScore": 7.1,
+        "population": 320000,
+        "fuelStations": 20,
+        "hospitals": 6,
+        "bufferHours": 35
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.790, 18.610], [73.820, 18.610], [73.820, 18.630],
+          [73.790, 18.630], [73.790, 18.610]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chinchwad",
+        "riskScore": 6.4,
+        "fuelScore": 6.8,
+        "powerScore": 5.5,
+        "foodScore": 6.0,
+        "logisticsScore": 6.5,
+        "population": 290000,
+        "fuelStations": 19,
+        "hospitals": 5,
+        "bufferHours": 40
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.780, 18.630], [73.810, 18.630], [73.810, 18.650],
+          [73.780, 18.650], [73.780, 18.630]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kharadi",
+        "riskScore": 5.8,
+        "fuelScore": 6.1,
+        "powerScore": 5.0,
+        "foodScore": 5.5,
+        "logisticsScore": 6.2,
+        "population": 195000,
+        "fuelStations": 14,
+        "hospitals": 3,
+        "bufferHours": 46
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.940, 18.540], [73.970, 18.540], [73.970, 18.560],
+          [73.940, 18.560], [73.940, 18.540]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Viman Nagar",
+        "riskScore": 4.5,
+        "fuelScore": 4.8,
+        "powerScore": 3.5,
+        "foodScore": 4.2,
+        "logisticsScore": 5.0,
+        "population": 140000,
+        "fuelStations": 10,
+        "hospitals": 4,
+        "bufferHours": 62
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.900, 18.560], [73.930, 18.560], [73.930, 18.580],
+          [73.900, 18.580], [73.900, 18.560]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Koregaon Park",
+        "riskScore": 3.5,
+        "fuelScore": 3.2,
+        "powerScore": 2.8,
+        "foodScore": 3.8,
+        "logisticsScore": 4.0,
+        "population": 85000,
+        "fuelStations": 7,
+        "hospitals": 5,
+        "bufferHours": 78
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.880, 18.530], [73.900, 18.530], [73.900, 18.550],
+          [73.880, 18.550], [73.880, 18.530]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Swargate",
+        "riskScore": 7.2,
+        "fuelScore": 7.8,
+        "powerScore": 6.0,
+        "foodScore": 6.8,
+        "logisticsScore": 7.5,
+        "population": 110000,
+        "fuelStations": 9,
+        "hospitals": 4,
+        "bufferHours": 30
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.850, 18.490], [73.870, 18.490], [73.870, 18.510],
+          [73.850, 18.510], [73.850, 18.490]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Katraj",
+        "riskScore": 8.1,
+        "fuelScore": 8.8,
+        "powerScore": 7.2,
+        "foodScore": 7.5,
+        "logisticsScore": 8.5,
+        "population": 225000,
+        "fuelStations": 15,
+        "hospitals": 3,
+        "bufferHours": 22
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [73.850, 18.450], [73.880, 18.450], [73.880, 18.480],
+          [73.850, 18.480], [73.850, 18.450]
+        ]]
+      }
+    }
+  ]
+}

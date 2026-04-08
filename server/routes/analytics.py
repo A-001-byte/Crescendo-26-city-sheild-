@@ -6,6 +6,7 @@ from services.analytics_store import (
     fetch_alert_volume,
     fetch_distribution,
     fetch_events,
+    fetch_login_activity,
     fetch_trends,
 )
 
@@ -95,4 +96,22 @@ def get_analytics_alerts():
         }), 200
     except Exception as exc:
         logger.exception("Error in /api/analytics/alerts: %s", exc)
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+@analytics_bp.route("/api/analytics/logins", methods=["GET"])
+def get_login_activity():
+    if not is_db_enabled():
+        return _db_disabled_response()
+
+    try:
+        days = int(request.args.get("days", 7))
+        city = request.args.get("city")
+
+        rows = fetch_login_activity(days=days, city=city)
+        return jsonify({"success": True, "data": rows}), 200
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid 'days' parameter"}), 400
+    except Exception as exc:
+        logger.exception("Error in /api/analytics/logins: %s", exc)
         return jsonify({"success": False, "error": "Internal server error"}), 500

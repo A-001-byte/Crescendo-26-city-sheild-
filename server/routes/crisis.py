@@ -17,13 +17,16 @@ def get_crisis_score():
         from services.nlp_engine import analyze_batch
         from services.oil_tracker import get_oil_prices
         from services.risk_calculator import calculate_city_risk_score
+        from config import config as _config
 
+        city = request.args.get("city") or _config.CITY
         articles = fetch_crisis_news()
         nlp_result = analyze_batch(articles)
         oil_data = get_oil_prices()
         crs_result = calculate_city_risk_score(
             nlp_signals=nlp_result,
             oil_data=oil_data,
+            city=city,
         )
 
         return jsonify({
@@ -39,24 +42,27 @@ def get_crisis_score():
 @crisis_bp.route("/api/crisis/score/history", methods=["GET"])
 def get_crisis_history():
     """
-    GET /api/crisis/score/history?days=7
-    Return historical CRS scores for the past N days.
+    GET /api/crisis/score/history?hours=24
+    Return historical CRS scores for the past N hours.
     """
     try:
-        days = int(request.args.get("days", 7))
-        days = max(1, min(days, 30))  # clamp to 1-30
+        hours = int(request.args.get("hours", 24))
+        hours = max(1, min(hours, 48))
 
         from services.risk_calculator import get_historical_scores
-        history = get_historical_scores(days=days)
+        from config import config as _config
+        city = request.args.get("city") or _config.CITY
+        history = get_historical_scores(hours=hours, city=city)
 
         return jsonify({
             "success": True,
             "data": history,
-            "days": days,
+            "hours": hours,
+            "city": city,
         }), 200
 
     except ValueError:
-        return jsonify({"success": False, "error": "Invalid 'days' parameter"}), 400
+        return jsonify({"success": False, "error": "Invalid 'hours' parameter"}), 400
     except Exception as exc:
         logger.exception("Error fetching crisis history: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500

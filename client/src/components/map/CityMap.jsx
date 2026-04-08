@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import { motion, AnimatePresence } from 'framer-motion'
+import { X, Layers3, Map as MapIcon, Fuel, Building2 } from 'lucide-react'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import WardLayer from './WardLayer'
@@ -14,9 +15,9 @@ let DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow })
 L.Marker.mergeOptions({ icon: DefaultIcon })
 
 const LAYER_BUTTONS = [
-  { id: 'wards', icon: 'map', label: 'Wards' },
-  { id: 'fuel', icon: 'local_gas_station', label: 'Fuel' },
-  { id: 'hospitals', icon: 'local_hospital', label: 'Hospitals' },
+  { id: 'wards', icon: MapIcon, label: 'Wards' },
+  { id: 'fuel', icon: Fuel, label: 'Fuel' },
+  { id: 'hospitals', icon: Building2, label: 'Hospitals' },
 ]
 
 function WardDetailPanel({ ward, onClose, position, mapRect }) {
@@ -68,7 +69,7 @@ function WardDetailPanel({ ward, onClose, position, mapRect }) {
           <h3 className="font-extrabold text-2xl letter-spacing-tight uppercase text-primary">{ward.name}</h3>
         </div>
         <button aria-label="Close detail panel" onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-outline-variant/30 transition-colors text-primary">
-          <span aria-hidden="true" className="material-symbols-outlined text-sm">close</span>
+          <X className="w-4 h-4" />
         </button>
       </div>
 
@@ -166,24 +167,24 @@ export default function CityMap() {
 
       {/* Layer Toggle */}
       <div 
-        className="absolute z-[20] flex flex-col gap-2 glass-panel rounded-full p-2 items-center shadow-lg border border-outline-variant/30"
-        style={{ top: '1rem', right: '1rem', maxWidth: 'calc(100% - 2rem)' }}
+        className="absolute z-[20] flex flex-col gap-2 glass-panel rounded-3xl p-2.5 sm:p-3 items-stretch shadow-lg border border-outline-variant/30 w-[168px] sm:w-[200px]"
+        style={{ top: '0.75rem', right: '0.75rem', maxWidth: 'calc(100% - 1.5rem)' }}
       >
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-lowest text-primary">
-          <span className="material-symbols-outlined text-sm">layers</span>
+        <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-surface-container-lowest text-primary mx-auto">
+          <Layers3 className="w-4 h-4" />
         </div>
-        <div className="w-[1px] h-6 bg-outline-variant/40 mx-1"></div>
-        {LAYER_BUTTONS.map(({ id, icon, label }) => (
+        <div className="w-full h-px bg-outline-variant/40"></div>
+        {LAYER_BUTTONS.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => setActiveLayer(id)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-extrabold uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest transition-all ${
               activeLayer === id
                 ? 'bg-primary text-white scale-105 shadow-md'
                 : 'bg-transparent text-primary hover:bg-surface-container-low border border-transparent hover:border-outline-variant/30'
             }`}
           >
-            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: activeLayer === id ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
             {label}
           </button>
         ))}

@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Panchavati" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.770, 20.005], [73.790, 20.005], [73.790, 20.020], [73.770, 20.020], [73.770, 20.005]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Gangapur" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.740, 19.980], [73.765, 19.980], [73.765, 20.000], [73.740, 20.000], [73.740, 19.980]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Satpur" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.730, 19.995], [73.755, 19.995], [73.755, 20.015], [73.730, 20.015], [73.730, 19.995]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Nashik Road" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.820, 19.955], [73.845, 19.955], [73.845, 19.975], [73.820, 19.975], [73.820, 19.955]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Indira Nagar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.800, 19.975], [73.825, 19.975], [73.825, 19.995], [73.800, 19.995], [73.800, 19.975]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "College Road" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[73.770, 19.985], [73.795, 19.985], [73.795, 20.005], [73.770, 20.005], [73.770, 19.985]]]
+      }
+    }
+  ]
+}

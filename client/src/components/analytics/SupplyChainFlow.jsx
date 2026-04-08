@@ -1,45 +1,6 @@
-const NODES = [
-  {
-    id: 'geo',
-    title: 'Geopolitical Event',
-    subtitle: '3 active crises',
-    metric: 'Strait of Hormuz',
-    color: '#EF4444',
-    icon: '🌍',
-  },
-  {
-    id: 'oil',
-    title: 'Oil Market',
-    subtitle: 'Brent: $87.40',
-    metric: '+3.2% today',
-    color: '#F97316',
-    icon: '📈',
-  },
-  {
-    id: 'import',
-    title: 'India Import',
-    subtitle: '85% dependency',
-    metric: '4.2 mb/d crude',
-    color: '#F59E0B',
-    icon: '🚢',
-  },
-  {
-    id: 'omc',
-    title: 'OMC Response',
-    subtitle: 'Advance payment mode',
-    metric: 'IOC / BPCL / HPCL',
-    color: '#3B82F6',
-    icon: '🏛️',
-  },
-  {
-    id: 'ward',
-    title: 'Ward Impact',
-    subtitle: 'Avg buffer: 42h',
-    metric: '15 wards monitored',
-    color: '#8B5CF6',
-    icon: '📍',
-  },
-]
+import { useEffect, useMemo, useState } from 'react'
+import { fetchCrisisScore, fetchLatestEvents, fetchOilData, fetchSignals, fetchWards } from '../../utils/api'
+import { useCrisis } from '../../context/CrisisContext'
 
 const LINE_STYLE = `
   @keyframes flowLine {
@@ -49,10 +10,107 @@ const LINE_STYLE = `
 `
 
 export default function SupplyChainFlow() {
+  const [oil, setOil] = useState(null)
+  const [signals, setSignals] = useState(null)
+  const [risk, setRisk] = useState(null)
+  const [events, setEvents] = useState([])
+  const [wards, setWards] = useState([])
+  const { selectedCity } = useCrisis()
+
+  useEffect(() => {
+    let mounted = true
+
+    const load = async () => {
+      try {
+        const [oilData, signalData, riskData, eventData, wardData] = await Promise.all([
+          fetchOilData(),
+          fetchSignals(),
+          fetchCrisisScore({ city: selectedCity }),
+          fetchLatestEvents(40),
+          fetchWards(),
+        ])
+        if (!mounted) return
+        setOil(oilData)
+        setSignals(signalData)
+        setRisk(riskData)
+        setEvents(Array.isArray(eventData) ? eventData : [])
+        setWards(Array.isArray(wardData) ? wardData : [])
+      } catch {
+        if (!mounted) return
+        setOil(null)
+        setSignals(null)
+        setRisk(null)
+        setEvents([])
+        setWards([])
+      }
+    }
+
+    load()
+    return () => { mounted = false }
+  }, [selectedCity])
+
+  const nodes = useMemo(() => {
+    const latestOil = Number(oil?.current_price ?? 0)
+    const prevOil = Number(oil?.previous_close ?? latestOil)
+    const oilDelta = prevOil > 0 ? ((latestOil - prevOil) / prevOil) * 100 : 0
+    const sevCounts = events.reduce((acc, e) => {
+      const k = String(e?.severity || 'low').toLowerCase()
+      acc[k] = (acc[k] || 0) + 1
+      return acc
+    }, {})
+    const activeCrises = Number(sevCounts.critical || 0) + Number(sevCounts.high || 0)
+    const fuelSignal = Number(signals?.fuel || 0)
+    const powerSignal = Number(signals?.power || 0)
+    const avgWardRisk = Number(risk?.score || risk?.overall_crs || 0)
+
+    return [
+      {
+        id: 'geo',
+        title: 'Geopolitical Event',
+        subtitle: `${activeCrises} high-severity signals`,
+        metric: `${events.length} live articles`,
+        color: '#EF4444',
+        icon: '🌍',
+      },
+      {
+        id: 'oil',
+        title: 'Oil Market',
+        subtitle: `Brent: $${latestOil.toFixed(2)}`,
+        metric: `${oilDelta >= 0 ? '+' : ''}${oilDelta.toFixed(1)}% vs prev close`,
+        color: '#F97316',
+        icon: '📈',
+      },
+      {
+        id: 'import',
+        title: 'Supply Signal',
+        subtitle: `Fuel ${fuelSignal.toFixed(1)} / 10`,
+        metric: `Power ${powerSignal.toFixed(1)} / 10`,
+        color: '#F59E0B',
+        icon: '🚢',
+      },
+      {
+        id: 'omc',
+        title: 'System Response',
+        subtitle: `${Number(risk?.prediction_confidence || 0).toFixed(0)}% confidence`,
+        metric: `CRS ${avgWardRisk.toFixed(1)} / 10`,
+        color: '#3B82F6',
+        icon: '🏛️',
+      },
+      {
+        id: 'ward',
+        title: 'Ward Impact',
+        subtitle: `${wards.length} wards monitored`,
+        metric: `${risk?.trigger_level || 'Normal'} trigger`,
+        color: '#8B5CF6',
+        icon: '📍',
+      },
+    ]
+  }, [events, oil, risk, signals, wards])
+
   const nodeW = 130
   const nodeH = 90
   const gapX = 60
-  const totalW = NODES.length * nodeW + (NODES.length - 1) * gapX
+  const totalW = nodes.length * nodeW + (nodes.length - 1) * gapX
   const svgH = nodeH + 40
 
   return (
@@ -63,7 +121,7 @@ export default function SupplyChainFlow() {
         <style>{LINE_STYLE}</style>
         <svg width={totalW} height={svgH + 20} viewBox={`0 0 ${totalW} ${svgH + 20}`}>
           {/* Connecting lines */}
-          {NODES.slice(0, -1).map((node, i) => {
+          {nodes.slice(0, -1).map((node, i) => {
             const x1 = i * (nodeW + gapX) + nodeW
             const x2 = (i + 1) * (nodeW + gapX)
             const y = nodeH / 2 + 10
@@ -76,7 +134,7 @@ export default function SupplyChainFlow() {
                 />
                 <line
                   x1={x1} y1={y} x2={x2} y2={y}
-                  stroke={NODES[i + 1].color}
+                  stroke={nodes[i + 1].color}
                   strokeWidth={2}
                   strokeDasharray="8 4"
                   opacity={0.6}
@@ -84,7 +142,7 @@ export default function SupplyChainFlow() {
                 />
                 <polygon
                   points={`${x2 - 8},${y - 5} ${x2},${y} ${x2 - 8},${y + 5}`}
-                  fill={NODES[i + 1].color}
+                  fill={nodes[i + 1].color}
                   opacity={0.8}
                 />
               </g>
@@ -92,7 +150,7 @@ export default function SupplyChainFlow() {
           })}
 
           {/* Nodes */}
-          {NODES.map((node, i) => {
+          {nodes.map((node, i) => {
             const x = i * (nodeW + gapX)
             return (
               <g key={node.id} transform={`translate(${x}, 10)`}>

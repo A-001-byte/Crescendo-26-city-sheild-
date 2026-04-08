@@ -6,6 +6,22 @@ logger = logging.getLogger(__name__)
 events_bp = Blueprint("events", __name__)
 
 
+def _compute_detailed_events(limit: int):
+    from services.news_fetcher import fetch_crisis_news
+    from services.nlp_engine import analyze_batch_detailed
+
+    articles = fetch_crisis_news()
+    return analyze_batch_detailed(articles[:limit])
+
+
+def _compute_service_signals():
+    from services.news_fetcher import fetch_crisis_news
+    from services.nlp_engine import analyze_batch_detailed
+
+    articles = fetch_crisis_news()
+    return analyze_batch_detailed(articles)
+
+
 @events_bp.route("/api/events/latest", methods=["GET"])
 def get_latest_events():
     """
@@ -16,11 +32,7 @@ def get_latest_events():
         limit = int(request.args.get("limit", 20))
         limit = max(1, min(limit, 50))
 
-        from services.news_fetcher import fetch_crisis_news
-        from services.nlp_engine import analyze_batch_detailed
-
-        articles = fetch_crisis_news()
-        result = analyze_batch_detailed(articles[:limit])
+        result = _compute_detailed_events(limit)
 
         return jsonify({
             "success": True,
@@ -36,6 +48,26 @@ def get_latest_events():
         return jsonify({"success": False, "error": "Invalid 'limit' parameter"}), 400
     except Exception as exc:
         logger.exception("Error fetching latest events: %s", exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@events_bp.route("/api/events", methods=["GET"])
+def get_events():
+    """
+    GET /api/events?limit=20
+    Backward-compatible alias that returns a plain event array.
+    """
+    try:
+        limit = int(request.args.get("limit", 20))
+        limit = max(1, min(limit, 50))
+
+        result = _compute_detailed_events(limit)
+        return jsonify(result["all_analyses"][:limit]), 200
+
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid 'limit' parameter"}), 400
+    except Exception as exc:
+        logger.exception("Error fetching events alias: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500
 
 
@@ -67,11 +99,7 @@ def get_service_signals():
     Return aggregated NLP service signals from current news batch.
     """
     try:
-        from services.news_fetcher import fetch_crisis_news
-        from services.nlp_engine import analyze_batch_detailed
-
-        articles = fetch_crisis_news()
-        result = analyze_batch_detailed(articles)
+        result = _compute_service_signals()
 
         return jsonify({
             "success": True,
@@ -87,6 +115,27 @@ def get_service_signals():
 
     except Exception as exc:
         logger.exception("Error fetching service signals: %s", exc)
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@events_bp.route("/api/signals", methods=["GET"])
+def get_signals_flat():
+    """
+    GET /api/signals
+    Flat signal response used by frontend shorthand clients.
+    """
+    try:
+        result = _compute_service_signals()
+        service_signals = result.get("service_signals", {})
+        return jsonify({
+            "fuel": float(service_signals.get("fuel", {}).get("score", 0) or 0),
+            "power": float(service_signals.get("power", {}).get("score", 0) or 0),
+            "food": float(service_signals.get("food", {}).get("score", 0) or 0),
+            "logistics": float(service_signals.get("logistics", {}).get("score", 0) or 0),
+        }), 200
+
+    except Exception as exc:
+        logger.exception("Error fetching flat signals alias: %s", exc)
         return jsonify({"success": False, "error": str(exc)}), 500
 
 

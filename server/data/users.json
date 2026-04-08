@@ -1,0 +1,26 @@
+[
+  {
+    "id": "8aa5b02c-6454-4474-9789-b9cd00abeaff",
+    "full_name": "Ankit Vyavahare",
+    "email": "ankit.v0611@gmail.com",
+    "username": "ankit.v0611",
+    "password_hash": "scrypt:32768:8:1$pIEsT3oop0njwx7q$a7d26bee9984a1996e2fe25295fec51540a4a63e50cdf673dde9abb057f264c78194e2d1db0cef0d28d268ff73f58a449426a005e4b9e46aa0b644042d5c779a",
+    "created_at": "2026-04-08T01:03:29.302412+00:00"
+  },
+  {
+    "id": "6c944f31-206e-4679-835c-9a3e5c9a6492",
+    "full_name": "Ankit V",
+    "email": "av.0601711@gmail.com",
+    "username": "av.0601711",
+    "password_hash": "scrypt:32768:8:1$QwxU8y8tdGwsD0h3$9123d2b93ef5ccaa0c9c64c8e58677cc81eb08546ee878a250432a63615ec13f970d2d9a9fa81f2d6986f157071c08899b26171e12456e0a050da5ddce63accf",
+    "created_at": "2026-04-08T01:50:19.185756+00:00"
+  },
+  {
+    "id": "9968d88b-f600-405a-89fc-32d560f0e5a7",
+    "full_name": "Ankit.v",
+    "email": "ankit.vyavahare24@vit.edu",
+    "username": "ankit.vyavahare24",
+    "password_hash": "scrypt:32768:8:1$dKSahFcvXnDtH0uI$ed4bda1992bf01776d20f8b8b86c4ad7fb8e1f92f4f913e0f06b465f1a15122e543125d2632129608c7b84b01051b258d122c6baa4457715c0ff85ae3752757a",
+    "created_at": "2026-04-08T02:05:58.876469+00:00"
+  }
+]

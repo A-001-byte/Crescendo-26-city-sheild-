@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import DashParticles from '../components/layout/DashParticles'
+import LoginBackground from '../components/layout/LoginBackground'
 import { loginUser } from '../utils/api'
-import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const [identity, setIdentity] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -18,119 +18,233 @@ export default function Login() {
       return
     }
 
+    setLoading(true)
+    setError('')
     try {
       const response = await loginUser({ identity: identity.trim(), password })
       const token = response?.token || response?.access_token || response?.accessToken
       const user = response?.user || { identity: identity.trim() }
 
-      if (!token) {
-        throw new Error('Authentication token missing from response.')
-      }
+      if (!token) throw new Error('Authentication token missing from response.')
 
       localStorage.setItem('cityshield_auth_token', token)
       localStorage.setItem('cityshield_auth_user', JSON.stringify(user))
-      setError('')
       navigate('/')
     } catch (err) {
       setError(err?.message || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <DashParticles />
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: '#06060e' }}
+    >
+      <LoginBackground />
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
         className="relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-12"
       >
-        <section className="order-2 lg:order-1 lg:col-span-8 px-8 lg:px-16 py-12 lg:py-16 flex flex-col justify-between bg-surface-container-lowest">
-          <div className="max-w-2xl mt-8 lg:mt-20">
-            <p className="text-[10px] uppercase tracking-widest font-extrabold text-secondary mb-6">Classified Interface</p>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-[-0.04em] text-primary uppercase leading-[0.95]">
-              CITYSHIELD
+        {/* ── Left: branding ── */}
+        <section className="order-2 lg:order-1 lg:col-span-8 px-8 lg:px-16 py-12 lg:py-16 flex flex-col justify-between">
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: 'easeOut' }}
+            className="max-w-2xl mt-8 lg:mt-24"
+          >
+            <p
+              className="text-[10px] uppercase tracking-[0.25em] font-extrabold mb-6"
+              style={{ color: 'rgba(96,165,250,0.65)' }}
+            >
+              Classified Interface
+            </p>
+
+            <h1
+              className="text-5xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-[-0.04em] uppercase leading-[0.92]"
+              style={{ color: '#ffffff' }}
+            >
+              CITY
+              <span style={{ color: '#60a5fa' }}>SHIELD</span>
             </h1>
-            <p className="mt-8 text-base md:text-lg text-secondary font-medium">
+
+            <div className="mt-6 h-px w-16" style={{ background: 'rgba(96,165,250,0.35)' }} />
+
+            <p
+              className="mt-6 text-base md:text-lg font-semibold"
+              style={{ color: 'rgba(255,255,255,0.5)' }}
+            >
               Urban Risk Intelligence System
             </p>
-            <p className="mt-4 text-sm md:text-base text-secondary max-w-xl">
-              Access synchronized crisis telemetry, service resilience signals, and decision support intelligence for urban operations.
+            <p
+              className="mt-3 text-sm md:text-base max-w-xl leading-relaxed"
+              style={{ color: 'rgba(255,255,255,0.28)' }}
+            >
+              Access synchronized crisis telemetry, service resilience signals,
+              and decision support intelligence for urban operations.
             </p>
-          </div>
 
-          <div className="mt-16 lg:mt-0 flex items-center gap-3">
+            {/* Status pills */}
+            <div className="mt-10 flex flex-wrap gap-3">
+              {['Fuel Monitor', 'Transport Intel', 'Food Security', 'Power Grid'].map((label) => (
+                <span
+                  key={label}
+                  className="text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full"
+                  style={{
+                    background: 'rgba(96,165,250,0.07)',
+                    border: '1px solid rgba(96,165,250,0.18)',
+                    color: 'rgba(96,165,250,0.65)',
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-16 lg:mt-0 flex items-center gap-3"
+          >
             <span className="w-2 h-2 rounded-full bg-error live-indicator" />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">System Active</span>
-          </div>
+            <span
+              className="text-[10px] font-extrabold uppercase tracking-widest"
+              style={{ color: 'rgba(255,255,255,0.45)' }}
+            >
+              System Active
+            </span>
+          </motion.div>
         </section>
 
-        <section className="order-1 lg:order-2 lg:col-span-4 px-6 sm:px-8 lg:px-10 py-8 lg:py-16 flex items-center justify-center bg-surface-container-low/40">
-          <motion.div
-            whileTap={{ scale: 0.998 }}
-            className="w-full max-w-md glass-panel rounded-[3rem] p-8 lg:p-10 bg-surface-container-lowest/70 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
-          >
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-[-0.04em] text-primary">Secure Access</h2>
-            <p className="mt-2 text-xs uppercase tracking-widest font-bold text-secondary">Authorized Personnel Only</p>
+        {/* ── Right: form ── */}
+        <section
+          className="order-1 lg:order-2 lg:col-span-4 px-6 sm:px-8 lg:px-10 py-8 lg:py-16 flex items-center justify-center relative overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.018)',
+            borderLeft: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          {/* Scan-line */}
+          <div className="auth-scanline" />
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <div>
-                <label htmlFor="identity" className="sr-only">Email or Username</label>
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.55, delay: 0.2, ease: 'easeOut' }}
+            className="w-full max-w-sm relative"
+          >
+            {/* Card */}
+            <div
+              className="rounded-[2rem] p-8 lg:p-9"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                boxShadow: '0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(96,165,250,0.06)',
+              }}
+            >
+              {/* Header */}
+              <div className="mb-7">
+                <h2
+                  className="text-2xl font-extrabold tracking-[-0.03em]"
+                  style={{ color: '#ffffff' }}
+                >
+                  Secure Access
+                </h2>
+                <p
+                  className="mt-1.5 text-[10px] uppercase tracking-[0.2em] font-bold"
+                  style={{ color: 'rgba(96,165,250,0.6)' }}
+                >
+                  Authorized Personnel Only
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <input
-                  id="identity"
-                  name="identity"
                   type="text"
                   autoComplete="username"
                   placeholder="Email or Username"
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
+                  className="dark-input w-full rounded-full px-5 py-3.5 text-sm font-medium"
                 />
-              </div>
 
-              <div>
-                <label htmlFor="password" className="sr-only">Password</label>
                 <input
-                  id="password"
-                  name="password"
                   type="password"
                   autoComplete="current-password"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-full px-6 py-4 bg-surface-container-low text-primary placeholder:text-secondary border border-outline-variant/20 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest focus:bg-surface-container-lowest transition-all duration-200"
+                  className="dark-input w-full rounded-full px-5 py-3.5 text-sm font-medium"
                 />
+
+                {error && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-[10px] font-bold uppercase tracking-widest text-error pt-1"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-full px-5 py-3.5 font-extrabold uppercase tracking-widest text-xs mt-1 transition-opacity duration-200"
+                  style={{
+                    background: loading
+                      ? 'rgba(96,165,250,0.4)'
+                      : 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+                    color: '#06060e',
+                    boxShadow: loading ? 'none' : '0 4px 24px rgba(96,165,250,0.35)',
+                  }}
+                >
+                  {loading ? 'Authenticating…' : 'Login'}
+                </motion.button>
+              </form>
+
+              {/* Footer */}
+              <div className="mt-5 flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled
+                  className="text-[10px] font-bold uppercase tracking-widest cursor-not-allowed"
+                  style={{ color: 'rgba(255,255,255,0.2)' }}
+                >
+                  Forgot Password?
+                </button>
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  No account?{' '}
+                  <Link
+                    to="/signup"
+                    className="transition-opacity hover:opacity-70"
+                    style={{ color: '#60a5fa' }}
+                  >
+                    Sign Up
+                  </Link>
+                </span>
               </div>
-
-              {error && (
-                <p className="text-xs font-bold uppercase tracking-widest text-error">{error}</p>
-              )}
-
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="w-full rounded-full px-6 py-4 bg-primary text-white font-extrabold uppercase tracking-widest text-xs transition-opacity duration-200 hover:opacity-90"
-              >
-                Login
-              </motion.button>
-            </form>
-
-            <div className="mt-6 text-right">
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="text-xs font-bold uppercase tracking-widest text-secondary hover:text-primary transition-colors duration-200"
-              >
-                Forgot Password?
-              </button>
             </div>
 
-            <div className="mt-6 text-center text-xs font-bold uppercase tracking-widest text-secondary">
-              Don&apos;t have an account?{' '}
-              <Link to="/signup" className="text-primary hover:opacity-80 transition-opacity">Sign Up</Link>
-            </div>
+            {/* Glow ring beneath card */}
+            <div
+              className="absolute -inset-px rounded-[2rem] pointer-events-none"
+              style={{
+                background: 'transparent',
+                boxShadow: '0 0 60px rgba(96,165,250,0.08)',
+              }}
+            />
           </motion.div>
         </section>
       </motion.div>

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 15788 /F)",
+      "Bash(cmd /c \"taskkill /PID 15788 /F\")",
+      "Bash(cmd /c \"taskkill /F /IM python.exe\")",
+      "Bash(cmd /c \"netstat -ano\")",
+      "Bash(cmd /c \"for /f \\\\\"tokens=5\\\\\" %a in \\('netstat -aon 2^>nul ^| findstr :5000 ^| findstr LISTENING'\\) do taskkill /F /PID %a\")",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 5000 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force; Write-Host \"Killed PID $\\($_.OwningProcess\\)\" }')",
+      "Bash(curl -s --max-time 2 http://localhost:5000/api/health)",
+      "Bash(.venv/Scripts/python server/app.py)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx --yes playwright install chromium --with-deps)",
+      "Bash(.venv/Scripts/python -c ':*)",
+      "Bash(node -e ':*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

@@ -6,6 +6,8 @@ import MapView from './pages/MapView'
 import Alerts from './pages/Alerts'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
+import Disruptions from './pages/Disruptions'
+import CityCompare from './pages/CityCompare'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 
@@ -31,6 +33,8 @@ function App() {
           <Route path="map" element={<MapView />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="disruptions" element={<Disruptions />} />
+          <Route path="compare" element={<CityCompare />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

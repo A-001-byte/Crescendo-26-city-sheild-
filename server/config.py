@@ -32,6 +32,12 @@ class Config:
         "https://www.alphavantage.co/query"
     )
     GDELT_TIMEOUT = float(os.getenv("GDELT_TIMEOUT", "10"))
+    OPENWEATHER_BASE_URL = os.getenv(
+        "OPENWEATHER_BASE_URL",
+        "https://api.openweathermap.org/data/2.5/weather"
+    )
+    OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY", "")
+    OPENWEATHER_TIMEOUT = float(os.getenv("OPENWEATHER_TIMEOUT", "8"))
 
     # Cache TTLs (seconds)
     NEWS_CACHE_TTL = int(os.getenv("NEWS_CACHE_TTL", "900"))   # 15 minutes

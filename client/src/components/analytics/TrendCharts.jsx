@@ -1,102 +1,170 @@
+import { useEffect, useMemo, useState } from 'react'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartTooltip, ResponsiveContainer, Legend, BarChart
+  Tooltip as RechartTooltip, ResponsiveContainer, BarChart,
 } from 'recharts'
+import { fetchCrisisScore, fetchLatestEvents, fetchOilData } from '../../utils/api'
+import { useCrisis } from '../../context/CrisisContext'
 
-// 30-day oil vs CRS data
-const OIL_CRS_DATA = Array.from({ length: 30 }, (_, i) => {
-  const day = i + 1
-  const oil = 78 + Math.sin(i * 0.4) * 8 + (i > 20 ? (i - 20) * 0.4 : 0)
-  const crs = 4.5 + Math.sin(i * 0.4 + 0.5) * 1.5 + (i > 20 ? (i - 20) * 0.08 : 0)
-  return {
-    day: `D${day}`,
-    oil: parseFloat(oil.toFixed(2)),
-    crs: parseFloat(Math.min(10, crs).toFixed(2)),
-  }
-})
-
-// 14-day service distribution
-const SERVICE_DATA = Array.from({ length: 14 }, (_, i) => {
-  const day = i + 1
-  return {
-    day: `D${day}`,
-    fuel: parseFloat((5 + Math.sin(i * 0.5) * 2 + (i > 9 ? 1.5 : 0)).toFixed(1)),
-    power: parseFloat((3.5 + Math.cos(i * 0.4) * 1).toFixed(1)),
-    food: parseFloat((4.8 + Math.sin(i * 0.3 + 1) * 0.8).toFixed(1)),
-    logistics: parseFloat((5.5 + Math.cos(i * 0.6) * 1.2).toFixed(1)),
-  }
-})
-
-// 14-day alert volume
-const ALERT_DATA = Array.from({ length: 14 }, (_, i) => ({
-  day: `D${i + 1}`,
-  critical: Math.floor(Math.random() * 3),
-  high: Math.floor(Math.random() * 6 + 1),
-  moderate: Math.floor(Math.random() * 8 + 2),
-  low: Math.floor(Math.random() * 5 + 1),
-}))
+const cardStyle = {
+  background: '#ffffff',
+  border: '1px solid rgba(0,0,0,0.07)',
+  boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+}
 
 const tooltipStyle = {
-  contentStyle: { background: '#1A1F2E', border: '1px solid #2A3142', borderRadius: 8, fontSize: 11 },
-  labelStyle: { color: '#94A3B8', fontFamily: '"JetBrains Mono"' },
+  contentStyle: {
+    background: '#ffffff',
+    border: '1px solid rgba(0,0,0,0.08)',
+    borderRadius: 12,
+    fontSize: 11,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    color: '#1a1c1c',
+  },
+  labelStyle: { color: '#5e5e5f', fontFamily: '"JetBrains Mono"', fontWeight: 700 },
   itemStyle: { fontFamily: '"JetBrains Mono"' },
 }
 
-export default function TrendCharts() {
+const axisProps = {
+  tick: { fill: '#94a3b8', fontSize: 9 },
+  axisLine: false,
+  tickLine: false,
+}
+
+const FALLBACK_RISK = {
+  score: 6.3,
+  scores: { fuel: 7.1, power: 5.4, food: 6.0, transport: 6.7 },
+}
+
+const FALLBACK_OIL = {
+  trend_7d: [86.2, 87.4, 88.1, 87.9, 89.3, 90.5, 89.8],
+}
+
+const FALLBACK_EVENTS = [
+  { id: 'evt-1', severity: 'high', published_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+  { id: 'evt-2', severity: 'moderate', published_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
+  { id: 'evt-3', severity: 'low', published_at: new Date(Date.now() - 1000 * 60 * 60 * 9).toISOString() },
+  { id: 'evt-4', severity: 'critical', published_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString() },
+  { id: 'evt-5', severity: 'high', published_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString() },
+  { id: 'evt-6', severity: 'moderate', published_at: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString() },
+]
+
+function bucketByDay(events) {
+  const buckets = {}
+  events.forEach((e) => {
+    const dt = new Date(e.published_at || Date.now())
+    const key = `${dt.getMonth() + 1}/${dt.getDate()}`
+    if (!buckets[key]) buckets[key] = { day: key, critical: 0, high: 0, moderate: 0, low: 0 }
+    const sev = String(e.severity || '').toLowerCase()
+    if (sev === 'critical') buckets[key].critical += 1
+    else if (sev === 'high') buckets[key].high += 1
+    else if (sev === 'moderate') buckets[key].moderate += 1
+    else buckets[key].low += 1
+  })
+  return Object.values(buckets).slice(-14)
+}
+
+function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="space-y-4 h-full overflow-y-auto">
-      {/* Oil Price vs CRS */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg">
-        <h3 className="font-heading font-semibold text-text-primary text-sm mb-1">Oil Price vs CRS</h3>
-        <p className="text-xs text-text-muted mb-3">30-day correlation</p>
+    <div className="rounded-3xl p-6" style={cardStyle}>
+      <h3 className="text-sm font-extrabold uppercase tracking-widest text-primary mb-0.5">{title}</h3>
+      <p className="text-[11px] text-secondary mb-4">{subtitle}</p>
+      {children}
+    </div>
+  )
+}
+
+export default function TrendCharts() {
+  const [risk, setRisk] = useState(null)
+  const [events, setEvents] = useState([])
+  const [oil, setOil] = useState(null)
+  const { selectedCity } = useCrisis()
+
+  useEffect(() => {
+    let mounted = true
+    Promise.all([fetchCrisisScore({ city: selectedCity }), fetchLatestEvents(100), fetchOilData()])
+      .then(([r, e, o]) => {
+        if (!mounted) return
+        const nextRisk = r || FALLBACK_RISK
+        const nextEvents = Array.isArray(e) && e.length ? e : FALLBACK_EVENTS
+        const nextOil = o || FALLBACK_OIL
+        setRisk(nextRisk)
+        setEvents(nextEvents)
+        setOil(nextOil)
+      })
+      .catch(() => {
+        if (!mounted) return
+        setRisk(FALLBACK_RISK)
+        setEvents(FALLBACK_EVENTS)
+        setOil(FALLBACK_OIL)
+      })
+    return () => { mounted = false }
+  }, [selectedCity])
+
+  const oilTrend = Array.isArray(oil?.trend_7d) ? oil.trend_7d : []
+  const currentCrs = Number(risk?.score || risk?.overall_crs || 0)
+
+  const oilCrsData = useMemo(() => {
+    if (!oilTrend.length) return []
+    return oilTrend.map((price, i) => ({
+      day: `D${i + 1}`,
+      oil: Number(price),
+      crs: Number.isFinite(currentCrs) ? currentCrs : 0,
+    }))
+  }, [oilTrend, currentCrs])
+
+  const serviceData = useMemo(() => {
+    const s = risk?.scores || {}
+    return [{ day: 'Now', fuel: Number(s.fuel || 0), power: Number(s.power || 0), food: Number(s.food || 0), logistics: Number(s.transport || 0) }]
+  }, [risk])
+
+  const alertData = useMemo(() => bucketByDay(events), [events])
+
+  return (
+    <div className="space-y-4">
+      <ChartCard title="Oil Price vs CRS" subtitle="Latest 7-day oil trend vs current CRS">
         <ResponsiveContainer width="100%" height={160}>
-          <ComposedChart data={OIL_CRS_DATA} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A3142" vertical={false} />
-            <XAxis dataKey="day" tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} interval={4} />
-            <YAxis yAxisId="oil" orientation="left" tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} domain={[60, 100]} />
-            <YAxis yAxisId="crs" orientation="right" tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} domain={[0, 10]} />
+          <ComposedChart data={oilCrsData} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+            <XAxis dataKey="day" {...axisProps} />
+            <YAxis yAxisId="oil" orientation="left" {...axisProps} />
+            <YAxis yAxisId="crs" orientation="right" {...axisProps} domain={[0, 10]} />
             <RechartTooltip {...tooltipStyle} />
-            <Bar yAxisId="oil" dataKey="oil" fill="#F97316" fillOpacity={0.3} radius={[2, 2, 0, 0]} name="Brent $/bbl" />
-            <Line yAxisId="crs" type="monotone" dataKey="crs" stroke="#3B82F6" strokeWidth={2} dot={false} name="CRS" />
+            <Bar yAxisId="oil" dataKey="oil" fill="#f97316" fillOpacity={0.25} radius={[3, 3, 0, 0]} name="Brent $/bbl" />
+            <Line yAxisId="crs" type="monotone" dataKey="crs" stroke="#3b82f6" strokeWidth={2} dot={false} name="CRS" />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
 
-      {/* Service Score Distribution */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg">
-        <h3 className="font-heading font-semibold text-text-primary text-sm mb-1">Service Score Distribution</h3>
-        <p className="text-xs text-text-muted mb-3">14-day stacked</p>
+      <ChartCard title="Service Score Distribution" subtitle="Current service risk snapshot">
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={SERVICE_DATA} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A3142" vertical={false} />
-            <XAxis dataKey="day" tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} interval={2} />
-            <YAxis tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} domain={[0, 10]} />
+          <BarChart data={serviceData} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+            <XAxis dataKey="day" {...axisProps} />
+            <YAxis {...axisProps} domain={[0, 10]} />
             <RechartTooltip {...tooltipStyle} />
-            <Bar dataKey="fuel" stackId="a" fill="#F97316" fillOpacity={0.8} name="Fuel" radius={[0,0,0,0]} />
-            <Bar dataKey="power" stackId="a" fill="#FACC15" fillOpacity={0.8} name="Power" />
-            <Bar dataKey="food" stackId="a" fill="#22C55E" fillOpacity={0.8} name="Food" />
-            <Bar dataKey="logistics" stackId="a" fill="#6366F1" fillOpacity={0.8} name="Logistics" radius={[2,2,0,0]} />
+            <Bar dataKey="fuel"      stackId="a" fill="#ef4444" fillOpacity={0.8} name="Fuel" />
+            <Bar dataKey="power"     stackId="a" fill="#f59e0b" fillOpacity={0.8} name="Power" />
+            <Bar dataKey="food"      stackId="a" fill="#22c55e" fillOpacity={0.8} name="Food" />
+            <Bar dataKey="logistics" stackId="a" fill="#6366f1" fillOpacity={0.8} name="Logistics" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
 
-      {/* Alert Volume */}
-      <div className="bg-bg-card border border-border-default rounded-xl p-4 shadow-lg">
-        <h3 className="font-heading font-semibold text-text-primary text-sm mb-1">Alert Volume by Severity</h3>
-        <p className="text-xs text-text-muted mb-3">14-day stacked</p>
+      <ChartCard title="Alert Volume by Severity" subtitle="Derived from live news events">
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={ALERT_DATA} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A3142" vertical={false} />
-            <XAxis dataKey="day" tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} interval={2} />
-            <YAxis tick={{ fill: '#64748B', fontSize: 9 }} axisLine={false} tickLine={false} />
+          <BarChart data={alertData} margin={{ top: 4, right: 8, bottom: 4, left: -15 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+            <XAxis dataKey="day" {...axisProps} />
+            <YAxis {...axisProps} />
             <RechartTooltip {...tooltipStyle} />
-            <Bar dataKey="low" stackId="a" fill="#10B981" fillOpacity={0.8} name="Low" />
-            <Bar dataKey="moderate" stackId="a" fill="#F59E0B" fillOpacity={0.8} name="Moderate" />
-            <Bar dataKey="high" stackId="a" fill="#EF4444" fillOpacity={0.8} name="High" />
-            <Bar dataKey="critical" stackId="a" fill="#DC2626" fillOpacity={0.9} name="Critical" radius={[2,2,0,0]} />
+            <Bar dataKey="low"      stackId="a" fill="#22c55e" fillOpacity={0.8} name="Low" />
+            <Bar dataKey="moderate" stackId="a" fill="#f59e0b" fillOpacity={0.8} name="Moderate" />
+            <Bar dataKey="high"     stackId="a" fill="#ef4444" fillOpacity={0.8} name="High" />
+            <Bar dataKey="critical" stackId="a" fill="#dc2626" fillOpacity={0.9} name="Critical" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartCard>
     </div>
   )
 }

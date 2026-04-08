@@ -1,0 +1,69 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Colaba" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.800, 18.895], [72.825, 18.895], [72.825, 18.915], [72.800, 18.915], [72.800, 18.895]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Dadar" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.835, 19.000], [72.865, 19.000], [72.865, 19.025], [72.835, 19.025], [72.835, 19.000]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bandra" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.820, 19.045], [72.855, 19.045], [72.855, 19.070], [72.820, 19.070], [72.820, 19.045]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Andheri" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.830, 19.100], [72.885, 19.100], [72.885, 19.145], [72.830, 19.145], [72.830, 19.100]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Kurla" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.860, 19.055], [72.910, 19.055], [72.910, 19.095], [72.860, 19.095], [72.860, 19.055]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Powai" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.885, 19.105], [72.935, 19.105], [72.935, 19.145], [72.885, 19.145], [72.885, 19.105]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Chembur" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.900, 19.025], [72.950, 19.025], [72.950, 19.070], [72.900, 19.070], [72.900, 19.025]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Borivali" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.815, 19.205], [72.875, 19.205], [72.875, 19.250], [72.815, 19.250], [72.815, 19.205]]]
+      }
+    }
+  ]
+}

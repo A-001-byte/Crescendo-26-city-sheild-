@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useRiskScore } from '../hooks/useRiskScore'
 import { useWebSocket } from '../hooks/useWebSocket'
-import { fetchAlerts, fetchLatestEvents } from '../utils/api'
 
 const CrisisContext = createContext(null)
 
@@ -14,8 +13,10 @@ const severityFromMessage = (message = '') => {
 }
 
 export function CrisisProvider({ children }) {
+  const [selectedCity, setSelectedCity] = useState('Pune')
   const {
     score: liveScore,
+    riskPayload,
     services: liveServices,
     wards,
     alertLevel,
@@ -23,15 +24,15 @@ export function CrisisProvider({ children }) {
     error,
     lastUpdated,
     refresh,
-  } = useRiskScore()
+  } = useRiskScore(selectedCity)
   const { connected: wsConnected, subscribe } = useWebSocket()
 
   const [score, setScore] = useState(null)
   const [services, setServices] = useState(null)
   const [alerts, setAlerts] = useState([])
   const [events, setEvents] = useState([])
-  const [selectedCity, setSelectedCity] = useState('Pune')
   const [demoActive, setDemoActive] = useState(false)
+  const feedOnline = demoActive || wsConnected || Boolean(lastUpdated && !error)
 
   // Sync live data into local state (demo mode can override these)
   useEffect(() => {
@@ -42,25 +43,27 @@ export function CrisisProvider({ children }) {
     if (!demoActive && liveServices) setServices(liveServices)
   }, [liveServices, demoActive])
 
-  // Load alerts from API
   useEffect(() => {
-    fetchAlerts().then((data) => {
-      if (data?.length) {
-        const normalized = data.map(a => ({
-          ...a,
-          created_at: a.created_at || a.timestamp,
-        }))
-        setAlerts(normalized)
-      }
-    }).catch(() => {})
-  }, [])
+    const messages = Array.isArray(riskPayload?.alerts) ? riskPayload.alerts : []
+    setAlerts(messages.map((message, idx) => ({
+      id: `risk-alert-${idx}`,
+      severity: severityFromMessage(message),
+      message,
+      ward: 'All Wards',
+      service: riskPayload?.primary_risk?.category || 'fuel',
+      created_at: riskPayload?.timestamp || new Date().toISOString(),
+    })))
 
-  // Load events from API
-  useEffect(() => {
-    fetchLatestEvents(20).then((data) => {
-      if (data?.length) setEvents(data)
-    }).catch(() => {})
-  }, [])
+    const summary = riskPayload?.prediction_summary || {}
+    const forecastEvents = Object.entries(summary).map(([service, trend], idx) => ({
+      id: `forecast-${service}-${idx}`,
+      title: `${service.toUpperCase()} forecast is ${String(trend).replace(/_/g, ' ')}`,
+      severity: String(trend).includes('increase') ? 'high' : 'moderate',
+      published_at: riskPayload?.timestamp || new Date().toISOString(),
+      source: 'Risk Engine',
+    }))
+    setEvents(forecastEvents)
+  }, [riskPayload])
 
   // WebSocket subscriptions
   useEffect(() => {
@@ -119,6 +122,7 @@ export function CrisisProvider({ children }) {
     alerts,
     events,
     wsConnected,
+    feedOnline,
     selectedCity,
     setSelectedCity,
     demoActive,

@@ -64,6 +64,7 @@ def create_app() -> Flask:
     from routes.risk_routes import risk_bp
     from routes.auth import auth_bp
     from routes.analytics import analytics_bp
+    from routes.disruptions import disruptions_bp
 
     app.register_blueprint(crisis_bp)
     app.register_blueprint(events_bp)
@@ -72,6 +73,7 @@ def create_app() -> Flask:
     app.register_blueprint(risk_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(disruptions_bp)
 
     # Ensure DB schema exists when a database URL is configured.
     try:
@@ -159,9 +161,12 @@ def create_app() -> Flask:
     return app
 
 
-def _build_snapshot() -> dict:
+def _build_snapshot(city: str | None = None) -> dict:
     """Collect current CRS, oil, and signal data for a WebSocket push."""
     from services import news_fetcher, nlp_engine, oil_tracker, risk_calculator
+    from config import config
+
+    city_name = (city or config.CITY)
 
     articles = news_fetcher.fetch_crisis_news()
     nlp_detailed = nlp_engine.analyze_batch_detailed(articles)
@@ -173,6 +178,7 @@ def _build_snapshot() -> dict:
     crs_result = risk_calculator.calculate_city_risk_score(
         nlp_signals=nlp_result,
         oil_data=oil_data,
+        city=city_name,
     )
 
     # Persist analytics in background to avoid blocking request/socket response.
@@ -187,6 +193,7 @@ def _build_snapshot() -> dict:
         logger.warning("Could not schedule analytics persistence: %s", exc)
 
     return {
+        "city": str(city_name).strip().lower(),
         "crs": crs_result,
         "oil": oil_data,
         "signals": {
@@ -203,8 +210,10 @@ def _persist_analytics_payload(crs_result: dict, oil_data: dict, nlp_detailed: d
         from config import config
         from services.analytics_store import persist_events, persist_snapshot_bundle
 
+        city_name = crs_result.get("city") or config.CITY
+
         persist_snapshot_bundle(
-            city=config.CITY,
+            city=city_name,
             city_payload=crs_result,
             oil_data=oil_data,
             sentiment=nlp_detailed.get("sentiment"),
@@ -224,9 +233,13 @@ def broadcast_update() -> None:
 
         # Invalidate caches to force fresh fetch
         from services import news_fetcher, oil_tracker
+        from utils.cache import invalidate_risk_cache
+        from services.public_data import invalidate_city_cache
 
         news_fetcher.invalidate_news_cache()
         oil_tracker.invalidate_oil_cache()
+        invalidate_risk_cache()
+        invalidate_city_cache()
 
         snapshot = _build_snapshot()
         socketio.emit("update", snapshot)
